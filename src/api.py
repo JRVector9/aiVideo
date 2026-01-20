@@ -3,7 +3,8 @@ FastAPI Server for Quote Video Generation
 """
 
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from typing import List, Optional
 from pathlib import Path
@@ -18,6 +19,11 @@ app = FastAPI(
     version="1.0.0"
 )
 
+# 정적 파일 서빙
+STATIC_DIR = Path(__file__).parent.parent / "static"
+STATIC_DIR.mkdir(exist_ok=True)
+app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+
 # 파이프라인 초기화 (서버 시작 시 한 번만)
 pipeline = None
 
@@ -28,8 +34,25 @@ async def startup_event():
     pipeline = QuoteVideoPipeline()
     print("[API] Pipeline ready!")
 
-@app.get("/")
+@app.get("/", response_class=HTMLResponse)
 async def root():
+    """프론트엔드 UI 제공"""
+    index_path = STATIC_DIR / "index.html"
+    if index_path.exists():
+        return index_path.read_text()
+    return """
+    <h1>AI Video Generator API</h1>
+    <p>Frontend not found. API endpoints:</p>
+    <ul>
+        <li>GET /health - Health check</li>
+        <li>POST /api/create-video - Create video</li>
+        <li>GET /api/videos - List videos</li>
+    </ul>
+    """
+
+@app.get("/api")
+async def api_info():
+    """API 정보"""
     return {
         "message": "AI Video Generator API",
         "version": "1.0.0",
