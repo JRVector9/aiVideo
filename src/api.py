@@ -2,17 +2,20 @@
 FastAPI Server for Quote Video Generation
 """
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
 from pathlib import Path
+from datetime import datetime
 import uvicorn
+import asyncio
 
 from quote_video.pipeline import QuoteVideoPipeline, Scene
-from quote_video.config import OUTPUT_DIR
+from quote_video.config import OUTPUT_DIR, PROJECT_ROOT
+from job_manager import JobManager, JobStatus
 
 app = FastAPI(
     title="AI Video Generator",
@@ -36,13 +39,20 @@ app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
 # 파이프라인 초기화 (서버 시작 시 한 번만)
 pipeline = None
+job_manager = None
 
 @app.on_event("startup")
 async def startup_event():
-    global pipeline
+    global pipeline, job_manager
     print("[API] Initializing pipeline...")
     pipeline = QuoteVideoPipeline()
+
+    # 작업 관리자 초기화
+    jobs_dir = PROJECT_ROOT / "jobs"
+    job_manager = JobManager(jobs_dir)
+
     print("[API] Pipeline ready!")
+    print(f"[API] Job manager ready! Jobs directory: {jobs_dir}")
 
 @app.get("/", response_class=HTMLResponse)
 async def root():
@@ -90,22 +100,55 @@ class VideoRequest(BaseModel):
     output_name: Optional[str] = "generated_video"
     clean_temp: Optional[bool] = True
 
-@app.post("/api/create-video")
-async def create_video(request: VideoRequest):
-    """
-    명언 영상 생성
+def process_video_job(job_id: str, scenes: List[Scene], output_name: str, clean_temp: bool):
+    """백그라운드에서 영상 생성 처리"""
+    try:
+        # 작업 시작
+        job_manager.update_job(
+            job_id,
+            status=JobStatus.PROCESSING,
+            started_at=datetime.utcnow().isoformat(),
+            current_stage="🎨 이미지 생성 중...",
+            progress=10
+        )
 
-    Request Body:
-    {
-        "scenes": [
-            {
-                "narration": "인생은 고통이다.",
-                "image_prompt": "A wise philosopher contemplating life"
+        # 영상 생성
+        result_path = pipeline.create_video(
+            scenes=scenes,
+            output_name=output_name,
+            clean_temp=clean_temp
+        )
+
+        # 작업 완료
+        job_manager.update_job(
+            job_id,
+            status=JobStatus.COMPLETED,
+            completed_at=datetime.utcnow().isoformat(),
+            current_stage="✅ 완료",
+            progress=100,
+            result={
+                "video_path": str(result_path),
+                "filename": result_path.name
             }
-        ],
-        "output_name": "my_video",
-        "clean_temp": true
-    }
+        )
+
+    except Exception as e:
+        # 작업 실패
+        job_manager.update_job(
+            job_id,
+            status=JobStatus.FAILED,
+            completed_at=datetime.utcnow().isoformat(),
+            current_stage="❌ 실패",
+            error=str(e)
+        )
+
+@app.post("/api/create-video")
+async def create_video(request: VideoRequest, background_tasks: BackgroundTasks):
+    """
+    명언 영상 생성 (비동기)
+
+    즉시 job_id를 반환하고 백그라운드에서 처리
+    /api/jobs/{job_id} 엔드포인트로 진행 상태 확인 가능
     """
     if not pipeline:
         raise HTTPException(status_code=503, detail="Pipeline not initialized")
@@ -117,22 +160,47 @@ async def create_video(request: VideoRequest):
             for s in request.scenes
         ]
 
-        # 영상 생성
-        result_path = pipeline.create_video(
-            scenes=scenes,
-            output_name=request.output_name,
-            clean_temp=request.clean_temp
+        # 작업 생성
+        job_id = job_manager.create_job(
+            scenes_count=len(scenes),
+            output_name=request.output_name
+        )
+
+        # 백그라운드 작업 추가
+        background_tasks.add_task(
+            process_video_job,
+            job_id,
+            scenes,
+            request.output_name,
+            request.clean_temp
         )
 
         return {
-            "status": "success",
-            "video_path": str(result_path),
-            "filename": result_path.name,
+            "status": "accepted",
+            "job_id": job_id,
+            "message": "영상 생성 작업이 시작되었습니다. /api/jobs/{job_id} 엔드포인트로 진행 상태를 확인하세요.",
             "scenes_count": len(scenes)
         }
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Video generation failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to create job: {str(e)}")
+
+@app.get("/api/jobs/{job_id}")
+async def get_job_status(job_id: str):
+    """작업 상태 조회"""
+    job = job_manager.get_job(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    return job
+
+@app.get("/api/jobs")
+async def list_jobs(limit: int = 20):
+    """작업 목록 조회"""
+    jobs = job_manager.list_jobs(limit=limit)
+    return {
+        "count": len(jobs),
+        "jobs": jobs
+    }
 
 @app.get("/api/videos")
 async def list_videos():

@@ -20,8 +20,8 @@ COPY src/ ./src/
 COPY assets/ ./assets/
 COPY static/ ./static/
 
-# Create output and temp directories
-RUN mkdir -p /app/output /app/temp
+# Create output, temp, and jobs directories
+RUN mkdir -p /app/output /app/temp /app/jobs
 
 # Environment variables
 ENV PYTHONUNBUFFERED=1
