@@ -102,22 +102,39 @@ class VideoRequest(BaseModel):
 
 def process_video_job(job_id: str, scenes: List[Scene], output_name: str, clean_temp: bool):
     """백그라운드에서 영상 생성 처리"""
+    import traceback
+
+    def update_progress(stage: str, progress: int):
+        """진행 상태 업데이트 콜백"""
+        job_manager.update_job(
+            job_id,
+            current_stage=stage,
+            progress=progress
+        )
+
     try:
+        print(f"[Job {job_id}] Starting video generation...")
+
         # 작업 시작
         job_manager.update_job(
             job_id,
             status=JobStatus.PROCESSING,
             started_at=datetime.utcnow().isoformat(),
-            current_stage="🎨 이미지 생성 중...",
-            progress=10
+            current_stage="🚀 영상 생성 시작...",
+            progress=5
         )
+
+        print(f"[Job {job_id}] Calling pipeline.create_video...")
 
         # 영상 생성
         result_path = pipeline.create_video(
             scenes=scenes,
             output_name=output_name,
-            clean_temp=clean_temp
+            clean_temp=clean_temp,
+            progress_callback=update_progress
         )
+
+        print(f"[Job {job_id}] Video created successfully: {result_path}")
 
         # 작업 완료
         job_manager.update_job(
@@ -133,13 +150,18 @@ def process_video_job(job_id: str, scenes: List[Scene], output_name: str, clean_
         )
 
     except Exception as e:
+        # 상세한 에러 로그
+        error_trace = traceback.format_exc()
+        print(f"[Job {job_id}] ERROR: {str(e)}")
+        print(f"[Job {job_id}] Traceback:\n{error_trace}")
+
         # 작업 실패
         job_manager.update_job(
             job_id,
             status=JobStatus.FAILED,
             completed_at=datetime.utcnow().isoformat(),
             current_stage="❌ 실패",
-            error=str(e)
+            error=f"{str(e)}\n\nTraceback:\n{error_trace}"
         )
 
 @app.post("/api/create-video")

@@ -49,7 +49,8 @@ class QuoteVideoPipeline:
         scenes: List[Scene],
         output_name: str,
         bgm_path: Optional[Path] = None,
-        clean_temp: bool = True
+        clean_temp: bool = True,
+        progress_callback: Optional[callable] = None
     ) -> Path:
         """
         씬 데이터로부터 최종 영상 생성
@@ -59,6 +60,7 @@ class QuoteVideoPipeline:
             output_name: 출력 파일명 (확장자 제외)
             bgm_path: 배경음악 파일 경로
             clean_temp: 임시 파일 삭제 여부
+            progress_callback: 진행 상태 콜백 함수 (stage, progress)
 
         Returns:
             최종 영상 파일 경로
@@ -69,15 +71,27 @@ class QuoteVideoPipeline:
         print(f"{'='*60}\n")
 
         scene_videos = []
+        total_scenes = len(scenes)
 
         # 각 씬 처리
         for i, scene in enumerate(scenes, 1):
-            print(f"\n--- Processing Scene {i}/{len(scenes)} ---")
-            scene_video = self._process_scene(scene, i)
+            print(f"\n--- Processing Scene {i}/{total_scenes} ---")
+
+            # 씬 처리 시작
+            if progress_callback:
+                progress_callback(
+                    f"🎬 Scene {i}/{total_scenes} 처리 중...",
+                    int(20 + (i-1) * 60 / total_scenes)
+                )
+
+            scene_video = self._process_scene(scene, i, progress_callback, total_scenes)
             scene_videos.append(scene_video)
 
         # 최종 영상 합성
         print(f"\n--- Composing Final Video ---")
+        if progress_callback:
+            progress_callback("🎞️ 최종 영상 합성 중...", 85)
+
         output_path = OUTPUT_DIR / f"{output_name}.mp4"
         final_video = self.video_composer.compose_video(
             scene_videos,
@@ -97,12 +111,16 @@ class QuoteVideoPipeline:
 
         return final_video
 
-    def _process_scene(self, scene: Scene, scene_num: int) -> Path:
+    def _process_scene(self, scene: Scene, scene_num: int, progress_callback: Optional[callable] = None, total_scenes: int = 1) -> Path:
         """단일 씬 처리"""
         scene_prefix = f"scene_{scene_num:03d}"
+        base_progress = 20 + (scene_num - 1) * 60 / total_scenes
 
         # 1. 이미지 생성
         print(f"[Scene {scene_num}] Generating image...")
+        if progress_callback:
+            progress_callback(f"🎨 Scene {scene_num}: 이미지 생성 중...", int(base_progress + 5))
+
         image_path = TEMP_DIR / f"{scene_prefix}_image.png"
         self.image_generator.generate(
             scene.image_prompt,
@@ -111,6 +129,9 @@ class QuoteVideoPipeline:
 
         # 2. TTS 생성
         print(f"[Scene {scene_num}] Generating TTS...")
+        if progress_callback:
+            progress_callback(f"🎙️ Scene {scene_num}: 음성 생성 중...", int(base_progress + 15))
+
         audio_path = TEMP_DIR / f"{scene_prefix}_audio.wav"
         self.tts_generator.generate(
             scene.narration,
@@ -119,6 +140,9 @@ class QuoteVideoPipeline:
 
         # 3. 자막 생성
         print(f"[Scene {scene_num}] Generating subtitles...")
+        if progress_callback:
+            progress_callback(f"📝 Scene {scene_num}: 자막 생성 중...", int(base_progress + 25))
+
         subtitle_path = TEMP_DIR / f"{scene_prefix}_subtitle.srt"
         self.subtitle_sync.generate_srt(
             audio_path,
@@ -127,6 +151,9 @@ class QuoteVideoPipeline:
 
         # 4. 씬 합성
         print(f"[Scene {scene_num}] Composing scene...")
+        if progress_callback:
+            progress_callback(f"🎬 Scene {scene_num}: 합성 중...", int(base_progress + 40))
+
         scene_video_path = TEMP_DIR / f"{scene_prefix}_video.mp4"
         self.video_composer.compose_scene(
             image_path,
