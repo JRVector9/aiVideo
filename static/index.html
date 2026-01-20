@@ -416,6 +416,10 @@
             }));
         }
 
+        // 진행 상태 추적 변수
+        let progressInterval = null;
+        let progressStartTime = null;
+
         // 영상 생성
         async function generateVideo() {
             const apiUrl = document.getElementById('apiUrl').value;
@@ -428,9 +432,16 @@
                 return;
             }
 
-            showStatus('영상 생성 중... 시간이 걸릴 수 있습니다.', 'info');
+            // 예상 시간 계산 (Scene당 약 30-60초)
+            const estimatedMinutes = Math.ceil(scenesData.length * 45 / 60);
+
+            // 진행 상태 시작
+            startProgressTracking(scenesData.length, estimatedMinutes);
 
             try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 600000); // 10분 타임아웃
+
                 const response = await fetch(`${apiUrl}/api/create-video`, {
                     method: 'POST',
                     headers: {
@@ -440,20 +451,95 @@
                         scenes: scenesData,
                         output_name: outputName,
                         clean_temp: true
-                    })
+                    }),
+                    signal: controller.signal
                 });
 
-                const data = await response.json();
+                clearTimeout(timeoutId);
+                stopProgressTracking();
 
-                if (response.ok) {
-                    showStatus(`✅ 영상 생성 완료! 파일명: ${data.filename}`, 'success');
-                    loadVideos();
-                } else {
-                    showStatus(`❌ 오류: ${data.detail}`, 'error');
+                if (!response.ok) {
+                    const contentType = response.headers.get('content-type');
+                    if (contentType && contentType.includes('application/json')) {
+                        const data = await response.json();
+                        showStatus(`❌ 오류: ${data.detail}`, 'error');
+                    } else {
+                        const text = await response.text();
+                        showStatus(`❌ 서버 오류 (${response.status}): ${text.substring(0, 100)}`, 'error');
+                    }
+                    return;
                 }
+
+                const data = await response.json();
+                showStatus(`✅ 영상 생성 완료! 파일명: ${data.filename}`, 'success');
+                loadVideos();
+
             } catch (error) {
-                showStatus(`❌ 네트워크 오류: ${error.message}`, 'error');
+                stopProgressTracking();
+                if (error.name === 'AbortError') {
+                    showStatus('❌ 타임아웃: 영상 생성에 너무 오래 걸렸습니다.', 'error');
+                } else {
+                    showStatus(`❌ 네트워크 오류: ${error.message}`, 'error');
+                }
             }
+        }
+
+        // 진행 상태 추적 시작
+        function startProgressTracking(sceneCount, estimatedMinutes) {
+            progressStartTime = Date.now();
+            let elapsedSeconds = 0;
+
+            const stages = [
+                '🎨 이미지 생성 중...',
+                '🎤 음성 합성 중...',
+                '📝 자막 생성 중...',
+                '🎬 영상 합성 중...'
+            ];
+
+            showProgressStatus(stages[0], 0, estimatedMinutes, sceneCount);
+
+            progressInterval = setInterval(() => {
+                elapsedSeconds = Math.floor((Date.now() - progressStartTime) / 1000);
+                const stageIndex = Math.min(Math.floor(elapsedSeconds / 30) % stages.length, stages.length - 1);
+                const progress = Math.min((elapsedSeconds / (estimatedMinutes * 60)) * 100, 95);
+
+                showProgressStatus(stages[stageIndex], progress, estimatedMinutes, sceneCount, elapsedSeconds);
+            }, 5000); // 5초마다 업데이트
+        }
+
+        // 진행 상태 중지
+        function stopProgressTracking() {
+            if (progressInterval) {
+                clearInterval(progressInterval);
+                progressInterval = null;
+            }
+        }
+
+        // 진행 상태 표시
+        function showProgressStatus(stage, progress, estimatedMinutes, sceneCount, elapsed = 0) {
+            const container = document.getElementById('status-container');
+            const progressBar = `
+                <div class="progress">
+                    <div class="progress-bar" style="width: ${progress}%"></div>
+                </div>
+            `;
+
+            const elapsedText = elapsed > 0 ? `경과: ${Math.floor(elapsed / 60)}분 ${elapsed % 60}초` : '';
+
+            container.innerHTML = `
+                <div class="status info">
+                    <div style="margin-bottom: 10px;">
+                        <strong>${stage}</strong>
+                    </div>
+                    <div style="font-size: 13px; color: #555; margin-bottom: 8px;">
+                        총 ${sceneCount}개 Scene | 예상 시간: 약 ${estimatedMinutes}분 | ${elapsedText}
+                    </div>
+                    ${progressBar}
+                    <div style="font-size: 12px; color: #6c757d; margin-top: 8px;">
+                        💡 Scene이 많을수록 시간이 오래 걸립니다. 브라우저를 닫지 마세요.
+                    </div>
+                </div>
+            `;
         }
 
         // 영상 목록 로드

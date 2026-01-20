@@ -5,6 +5,7 @@ FastAPI Server for Quote Video Generation
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
 from pathlib import Path
@@ -17,6 +18,15 @@ app = FastAPI(
     title="AI Video Generator",
     description="FLUX + ElevenLabs + Whisper 기반 명언 영상 자동 생성 API",
     version="1.0.0"
+)
+
+# CORS 설정 추가
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # 프로덕션에서는 특정 도메인만 허용
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # 정적 파일 서빙
