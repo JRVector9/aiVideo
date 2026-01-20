@@ -1,0 +1,153 @@
+# Changelog
+
+All notable changes to Quote Video System will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [1.0.0] - 2025-01-21
+
+### Added
+
+#### Core Features
+- **FLUX Schnell Image Generation**: ComfyUI 기반 고속 이미지 생성 (4 steps, 15-30초)
+- **ElevenLabs TTS**: multilingual-v2 모델로 고품질 한국어 나레이션 생성
+- **Whisper Subtitles**: large-v3 모델로 정확한 타임스탬프 자막 생성
+- **FFmpeg Video Composition**: 전문가급 영상 합성 시스템
+
+#### Python Modules
+- `src.quote_video.config`: 중앙 설정 관리
+- `src.quote_video.flux_image_generator`: FLUX 이미지 생성기
+- `src.quote_video.tts_generator`: ElevenLabs TTS 생성기
+- `src.quote_video.subtitle_sync`: Whisper 자막 동기화
+- `src.quote_video.video_composer`: FFmpeg 영상 합성
+- `src.quote_video.pipeline`: 전체 파이프라인 통합
+
+#### Documentation
+- `README.md`: 프로젝트 개요 및 기능 소개
+- `SETUP.md`: 상세 설치 가이드 (270+ 줄)
+- `tests/README.md`: 테스트 가이드
+- `.claude/skills/`: Claude Code 스킬 문서 (4개)
+  - `generate-image/`: FLUX Schnell 이미지 생성 스킬
+  - `generate-tts/`: ElevenLabs TTS 스킬
+  - `generate-subtitle/`: Whisper 자막 스킬
+  - `compose-video/`: FFmpeg 영상 합성 스킬
+
+#### Test Scripts
+- `tests/test_comfyui.py`: ComfyUI 서버 연결 테스트
+- `tests/check_models.py`: 모델 목록 조회
+- `tests/find_flux.py`: FLUX 모델 검색
+- `tests/test_flux_image.py`: 이미지 생성 테스트
+- `tests/test_subtitle.py`: 자막 생성 테스트
+
+#### Examples
+- `example.py`: 4가지 사용 예제 스크립트
+  - 간단한 1씬 영상
+  - 3씬 연결 영상
+  - BGM 포함 영상
+  - 커스텀 설정 영상
+
+#### Configuration
+- `.env.example`: 환경 변수 템플릿
+- `requirements.txt`: Python 의존성 목록
+- `.gitignore`: Git 제외 파일 설정
+
+### Technical Specifications
+
+#### Image Generation (FLUX Schnell)
+- Model: flux1-schnell.safetensors
+- Loader: UNETLoader (not CheckpointLoaderSimple)
+- Steps: 4 (optimal for Schnell)
+- CFG Scale: 1.0 (FLUX recommended)
+- Resolution: 1920x1080
+- Generation Time: 15-30 seconds
+- Style: Notion-style minimal illustration
+
+#### TTS (ElevenLabs)
+- Model: eleven_multilingual_v2
+- Default Voice: Adam (pNInz6obpgDQGcFmaJgB)
+- Sample Rate: 44100 Hz
+- Format: MP3
+- Language: Korean support
+- Generation Time: 3-5 seconds
+- Free Tier: 10,000 characters/month
+
+#### Subtitles (Whisper)
+- Model: large-v3
+- Language: Korean (ko)
+- Format: SRT
+- Timestamp: Word-level precision
+- Accuracy: 95%+
+- Processing Time: 5-10 seconds per minute
+
+#### Video Composition (FFmpeg)
+- Resolution: 1920x1080 (Full HD)
+- FPS: 30
+- Video Codec: libx264 (H.264)
+- Audio Codec: AAC 192kbps
+- Pixel Format: yuv420p
+- Fade Effects: 0.5s in/out
+- BGM Volume: 15%
+
+### Performance
+
+| Task | Time | Output |
+|------|------|--------|
+| Image Generation | 15-30s | 1.5MB PNG |
+| TTS Generation | 3-5s | 70KB MP3 |
+| Subtitle Generation | 5-10s | SRT file |
+| Video Composition | 10-15s | 10-50MB MP4 |
+| **Total (1 scene)** | **~45s** | **Ready MP4** |
+| **Total (10 scenes)** | **~8min** | **Full video** |
+
+### Dependencies
+
+#### Python Packages
+- `elevenlabs>=2.31.0`: TTS API
+- `openai-whisper`: Subtitle generation
+- `requests`: ComfyUI API
+- `ffmpeg-python`: Video composition
+- `torch`: Whisper backend
+- `python-dotenv`: Environment management
+
+#### External Tools
+- FFmpeg 6.x: Video/audio processing
+- Python 3.10+: Runtime environment
+
+#### API Services
+- ComfyUI Server: comfyui.jrai.space (FLUX Schnell)
+- ElevenLabs API: TTS service (free tier available)
+
+### System Requirements
+- OS: macOS, Linux, Windows (WSL recommended)
+- Python: 3.10+
+- RAM: 8GB+ (16GB recommended for Whisper)
+- Disk: 5GB+ (includes Whisper model)
+- Network: Internet connection required
+
+---
+
+## [Unreleased]
+
+### Planned Features
+- Parallel scene processing
+- Additional voice options
+- Custom subtitle styling UI
+- Video preview before final render
+- Progress callbacks
+- Batch processing CLI
+- Docker deployment
+- Web interface
+
+---
+
+## Version History
+
+- **1.0.0** (2025-01-21): Initial release with full pipeline
+  - FLUX Schnell image generation
+  - ElevenLabs TTS
+  - Whisper subtitles
+  - FFmpeg composition
+  - Complete documentation
+  - Test suite
+  - Example scripts

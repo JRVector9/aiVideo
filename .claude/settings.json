@@ -1,0 +1,36 @@
+{
+  "skills": [
+    {
+      "name": "generate-image",
+      "path": ".claude/skills/generate-image"
+    },
+    {
+      "name": "generate-tts",
+      "path": ".claude/skills/generate-tts"
+    },
+    {
+      "name": "generate-subtitle",
+      "path": ".claude/skills/generate-subtitle"
+    },
+    {
+      "name": "compose-video",
+      "path": ".claude/skills/compose-video"
+    }
+  ],
+  "agents": [
+    {
+      "name": "quote-video-agent",
+      "path": ".claude/agents/quote-video-agent.md"
+    },
+    {
+      "name": "quote-writer-agent",
+      "path": ".claude/agents/quote-writer-agent.md"
+    }
+  ],
+  "commands": [
+    {
+      "name": "createvideo",
+      "path": ".claude/commands/create-quote-video.md"
+    }
+  ]
+}

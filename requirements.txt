@@ -1,0 +1,15 @@
+# ComfyUI API
+requests>=2.31.0
+websocket-client>=1.6.0
+
+# ElevenLabs TTS
+elevenlabs>=2.31.0
+
+# Whisper
+openai-whisper>=20231117
+
+# Audio/Video Processing
+ffmpeg-python>=0.2.0
+
+# Utilities
+python-dotenv>=1.0.0
