@@ -324,9 +324,10 @@
                             <div class="hint">기본값: 현재 배포된 서버</div>
                         </div>
                         <div class="form-group">
-                            <label>Output Name</label>
-                            <input type="text" id="outputName" value="generated_video" placeholder="generated_video">
-                            <div class="hint">생성될 영상 파일 이름</div>
+                            <label>📁 파일명 자동 생성</label>
+                            <div style="padding: 10px; background: #f8f9fa; border-radius: 8px; color: #6c757d; font-size: 13px;">
+                                aiVideo_YYYYMMDD_001.mp4 형식으로 자동 생성됩니다
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -423,7 +424,6 @@
         // 영상 생성
         async function generateVideo() {
             const apiUrl = document.getElementById('apiUrl').value;
-            const outputName = document.getElementById('outputName').value;
             const scenesData = collectScenes();
 
             // 유효성 검사
@@ -441,7 +441,6 @@
                     },
                     body: JSON.stringify({
                         scenes: scenesData,
-                        output_name: outputName,
                         clean_temp: true
                     })
                 });
@@ -461,6 +460,8 @@
                 const data = await response.json();
 
                 if (data.status === 'accepted' && data.job_id) {
+                    // 작업 ID와 파일명 표시
+                    showStatus(`🚀 영상 생성 시작: ${data.filename}`, 'info');
                     // 작업 ID를 받았으면 폴링 시작
                     startJobPolling(apiUrl, data.job_id, scenesData.length);
                 } else {

@@ -12,10 +12,38 @@ from pathlib import Path
 from datetime import datetime
 import uvicorn
 import asyncio
+import re
 
 from quote_video.pipeline import QuoteVideoPipeline, Scene
 from quote_video.config import OUTPUT_DIR, PROJECT_ROOT
 from job_manager import JobManager, JobStatus
+
+def generate_video_filename() -> str:
+    """
+    자동으로 고유한 영상 파일명 생성
+    형식: aiVideo_YYYYMMDD_001.mp4
+    """
+    today = datetime.now().strftime("%Y%m%d")
+    pattern = f"aiVideo_{today}_*.mp4"
+
+    # 오늘 날짜의 기존 파일 찾기
+    existing_files = list(OUTPUT_DIR.glob(pattern))
+
+    if not existing_files:
+        # 첫 번째 파일
+        return f"aiVideo_{today}_001"
+
+    # 기존 파일에서 숫자 추출
+    numbers = []
+    for file in existing_files:
+        match = re.search(rf"aiVideo_{today}_(\d+)\.mp4", file.name)
+        if match:
+            numbers.append(int(match.group(1)))
+
+    # 가장 큰 숫자 + 1
+    next_number = max(numbers) + 1 if numbers else 1
+
+    return f"aiVideo_{today}_{next_number:03d}"
 
 app = FastAPI(
     title="AI Video Generator",
@@ -97,7 +125,6 @@ class SceneInput(BaseModel):
 
 class VideoRequest(BaseModel):
     scenes: List[SceneInput]
-    output_name: Optional[str] = "generated_video"
     clean_temp: Optional[bool] = True
 
 def process_video_job(job_id: str, scenes: List[Scene], output_name: str, clean_temp: bool):
@@ -182,10 +209,14 @@ async def create_video(request: VideoRequest, background_tasks: BackgroundTasks)
             for s in request.scenes
         ]
 
+        # 자동으로 고유한 파일명 생성
+        auto_filename = generate_video_filename()
+        print(f"[API] Auto-generated filename: {auto_filename}")
+
         # 작업 생성
         job_id = job_manager.create_job(
             scenes_count=len(scenes),
-            output_name=request.output_name
+            output_name=auto_filename
         )
 
         # 백그라운드 작업 추가
@@ -193,13 +224,14 @@ async def create_video(request: VideoRequest, background_tasks: BackgroundTasks)
             process_video_job,
             job_id,
             scenes,
-            request.output_name,
+            auto_filename,
             request.clean_temp
         )
 
         return {
             "status": "accepted",
             "job_id": job_id,
+            "filename": f"{auto_filename}.mp4",
             "message": "영상 생성 작업이 시작되었습니다. /api/jobs/{job_id} 엔드포인트로 진행 상태를 확인하세요.",
             "scenes_count": len(scenes)
         }
@@ -229,6 +261,10 @@ async def list_videos():
     """생성된 영상 목록"""
     OUTPUT_DIR.mkdir(exist_ok=True)
     videos = list(OUTPUT_DIR.glob("*.mp4"))
+
+    print(f"[API] Found {len(videos)} videos in {OUTPUT_DIR}")
+    for v in videos:
+        print(f"[API] - {v.name} ({v.stat().st_size} bytes, created: {v.stat().st_mtime})")
 
     return {
         "count": len(videos),
