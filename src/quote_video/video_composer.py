@@ -4,6 +4,7 @@ FFmpeg을 사용한 영상 합성 (이미지 + 오디오 + 자막 + BGM)
 """
 
 import subprocess
+import shutil
 from pathlib import Path
 from typing import Optional, List
 from .config import (
@@ -146,7 +147,9 @@ class VideoComposer:
             final_output = self._add_bgm(temp_output, bgm_path, output_path, bgm_volume)
         else:
             final_output = output_path
-            temp_output.rename(final_output)
+            # Copy across volumes instead of rename (fixes cross-device link error)
+            shutil.copy(temp_output, final_output)
+            temp_output.unlink()
 
         print(f"[VideoComposer] Final video: {final_output}")
         return final_output
