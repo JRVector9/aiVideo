@@ -13,3 +13,7 @@ ffmpeg-python>=0.2.0
 
 # Utilities
 python-dotenv>=1.0.0
+
+# API Server
+fastapi>=0.104.0
+uvicorn>=0.24.0
