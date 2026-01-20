@@ -191,13 +191,8 @@ class VideoComposer:
 
         # 자막
         if subtitle_path and subtitle_path.exists():
-            # .ttf 또는 .otf 폰트 찾기
-            font_path = FONT_DIR / f"{SUBTITLE_FONT}.ttf"
-            if not font_path.exists():
-                font_path = FONT_DIR / f"{SUBTITLE_FONT}.otf"
-
             # ASS 자막으로 변환하여 폰트 직접 지정
-            ass_path = self._convert_srt_to_ass(subtitle_path, font_path if font_path.exists() else None)
+            ass_path = self._convert_srt_to_ass(subtitle_path)
             if ass_path:
                 # subtitles 필터 사용 (ASS 파일 지원)
                 # 경로의 특수 문자 이스케이프
@@ -245,8 +240,19 @@ class VideoComposer:
         }
         return color_map.get(color.lower(), "FFFFFF")
 
-    def _convert_srt_to_ass(self, srt_path: Path, font_path: Optional[Path]) -> Optional[Path]:
-        """SRT 자막을 ASS 형식으로 변환 (폰트 경로 포함)"""
+    def _color_to_ass(self, color: str) -> str:
+        """색상명을 ASS 형식으로 변환 (&HAABBGGRR)"""
+        color_map = {
+            "white": "&H00FFFFFF",
+            "black": "&H00000000",
+            "red": "&H000000FF",
+            "green": "&H0000FF00",
+            "blue": "&H00FF0000",
+        }
+        return color_map.get(color.lower(), "&H00FFFFFF")
+
+    def _convert_srt_to_ass(self, srt_path: Path) -> Optional[Path]:
+        """SRT 자막을 ASS 형식으로 변환 (시스템 폰트 사용)"""
         try:
             # SRT 파일 읽기
             with open(srt_path, 'r', encoding='utf-8') as f:
@@ -275,8 +281,12 @@ class VideoComposer:
             # ASS 파일 생성
             ass_path = srt_path.with_suffix('.ass')
 
-            # 폰트 경로 설정
-            fontname = str(font_path.absolute()) if font_path and font_path.exists() else "Arial"
+            # 시스템에 설치된 폰트 이름 사용
+            fontname = SUBTITLE_FONT
+
+            # ASS 색상 설정
+            primary_color = self._color_to_ass(SUBTITLE_FONT_COLOR)
+            outline_color = self._color_to_ass(SUBTITLE_OUTLINE_COLOR)
 
             # ASS 헤더
             ass_content = f"""[Script Info]
@@ -288,7 +298,7 @@ PlayResY: {VIDEO_HEIGHT}
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Default,{fontname},{SUBTITLE_FONT_SIZE},&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,{SUBTITLE_OUTLINE_WIDTH},0,2,10,10,50,1
+Style: Default,{fontname},{SUBTITLE_FONT_SIZE},{primary_color},&H000000FF,{outline_color},&H00000000,0,0,0,0,100,100,0,0,1,{SUBTITLE_OUTLINE_WIDTH},0,2,10,10,50,1
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
