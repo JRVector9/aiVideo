@@ -25,6 +25,10 @@
     {
       "name": "quote-writer-agent",
       "path": ".claude/agents/quote-writer-agent.md"
+    },
+    {
+      "name": "frontend-agent",
+      "path": ".claude/agents/frontend-agent.md"
     }
   ],
   "commands": [
