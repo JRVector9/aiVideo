@@ -482,33 +482,61 @@
         </div>
 
         <div class="content">
-            <!-- API 설정 섹션 -->
+            <!-- 사용법 & 설정 섹션 -->
             <div class="section">
-                <div class="section-title accordion-toggle" onclick="toggleAccordion('api-settings')">
-                    ⚙️ API 설정
+                <div class="section-title accordion-toggle" onclick="toggleAccordion('usage-settings')">
+                    📚 사용법 & 설정
                 </div>
-                <div id="api-settings" class="accordion-content">
-                    <!-- API 설정 사용법 -->
-                    <div style="margin-bottom: 20px; padding: 15px; background: linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 100%); border-left: 4px solid #4caf50; border-radius: 8px;">
-                        <div style="font-weight: 600; margin-bottom: 8px; color: #2e7d32;">📖 API 설정 사용법</div>
-                        <ul style="margin: 0; padding-left: 20px; color: #424242; font-size: 13px; line-height: 1.6;">
-                            <li><strong>배포된 서버 사용</strong> (기본): <code style="background: #fff; padding: 2px 6px; border-radius: 4px;">https://aivideo.jrai.space</code> 그대로 사용</li>
-                            <li><strong>로컬 개발 서버 사용</strong>: <code style="background: #fff; padding: 2px 6px; border-radius: 4px;">http://localhost:8000</code>로 변경 (FastAPI 서버 실행 필요)</li>
-                            <li><strong>파일명</strong>: 자동으로 날짜와 시간 기반으로 생성됩니다 (예: aiVideo_20260121_001.mp4)</li>
-                            <li><strong>주의</strong>: API URL 변경 시 해당 서버가 실행 중이어야 영상 생성이 가능합니다</li>
-                        </ul>
+                <div id="usage-settings" class="accordion-content">
+                    <!-- 1. 사용 엔진 정보 -->
+                    <div style="margin-bottom: 25px; padding: 20px; background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%); border-left: 4px solid #667eea; border-radius: 12px;">
+                        <div style="font-weight: 600; margin-bottom: 12px; color: #4a5568; font-size: 16px;">🎨 사용 엔진 정보</div>
+                        <div style="display: grid; gap: 12px; color: #2d3748; font-size: 14px; line-height: 1.7;">
+                            <div style="display: flex; align-items: start; gap: 10px;">
+                                <div style="min-width: 140px; font-weight: 600; color: #667eea;">🖼️ 이미지 생성</div>
+                                <div><strong>ComfyUI FLUX Schnell</strong> - Notion 스타일 미니멀 일러스트, 고품질 4-step 생성</div>
+                            </div>
+                            <div style="display: flex; align-items: start; gap: 10px;">
+                                <div style="min-width: 140px; font-weight: 600; color: #667eea;">🎙️ 음성 생성 (TTS)</div>
+                                <div><strong>ElevenLabs</strong> - multilingual-v2 모델, 자연스러운 한국어 나레이션</div>
+                            </div>
+                            <div style="display: flex; align-items: start; gap: 10px;">
+                                <div style="min-width: 140px; font-weight: 600; color: #667eea;">📝 자막 생성</div>
+                                <div><strong>Whisper large-v3</strong> - 정확한 타임스탬프 기반 자막 동기화</div>
+                            </div>
+                            <div style="display: flex; align-items: start; gap: 10px;">
+                                <div style="min-width: 140px; font-weight: 600; color: #667eea;">🎬 영상 합성</div>
+                                <div><strong>FFmpeg</strong> - 이미지 + 오디오 + 자막 전문가급 합성, Fade 효과</div>
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="settings-grid">
-                        <div class="form-group">
-                            <label>API Base URL</label>
-                            <input type="text" id="apiUrl" value="https://aivideo.jrai.space" placeholder="https://aivideo.jrai.space">
-                            <div class="hint">기본값: 현재 배포된 서버</div>
+                    <!-- 2. API 설정 -->
+                    <div style="margin-bottom: 20px;">
+                        <div style="font-weight: 600; margin-bottom: 12px; color: #4a5568; font-size: 16px;">⚙️ API 설정</div>
+
+                        <!-- API 설정 사용법 -->
+                        <div style="margin-bottom: 20px; padding: 15px; background: linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 100%); border-left: 4px solid #4caf50; border-radius: 8px;">
+                            <div style="font-weight: 600; margin-bottom: 8px; color: #2e7d32;">📖 API 설정 사용법</div>
+                            <ul style="margin: 0; padding-left: 20px; color: #424242; font-size: 13px; line-height: 1.6;">
+                                <li><strong>배포된 서버 사용</strong> (기본): <code style="background: #fff; padding: 2px 6px; border-radius: 4px;">https://aivideo.jrai.space</code> 그대로 사용</li>
+                                <li><strong>로컬 개발 서버 사용</strong>: <code style="background: #fff; padding: 2px 6px; border-radius: 4px;">http://localhost:8000</code>로 변경 (FastAPI 서버 실행 필요)</li>
+                                <li><strong>파일명</strong>: 자동으로 날짜와 시간 기반으로 생성됩니다 (예: aiVideo_20260121_001.mp4)</li>
+                                <li><strong>주의</strong>: API URL 변경 시 해당 서버가 실행 중이어야 영상 생성이 가능합니다</li>
+                            </ul>
                         </div>
-                        <div class="form-group">
-                            <label>📁 파일명 자동 생성</label>
-                            <div style="padding: 10px; background: #f8f9fa; border-radius: 8px; color: #6c757d; font-size: 13px;">
-                                aiVideo_YYYYMMDD_001.mp4 형식으로 자동 생성됩니다
+
+                        <div class="settings-grid">
+                            <div class="form-group">
+                                <label>API Base URL</label>
+                                <input type="text" id="apiUrl" value="https://aivideo.jrai.space" placeholder="https://aivideo.jrai.space">
+                                <div class="hint">기본값: 현재 배포된 서버</div>
+                            </div>
+                            <div class="form-group">
+                                <label>📁 파일명 자동 생성</label>
+                                <div style="padding: 10px; background: #f8f9fa; border-radius: 8px; color: #6c757d; font-size: 13px;">
+                                    aiVideo_YYYYMMDD_001.mp4 형식으로 자동 생성됩니다
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -745,9 +773,11 @@
             `).join('');
         }
 
-        // Scene 데이터 수집
+        // Scene 데이터 수집 (DOM 순서 기반)
         function collectScenes() {
-            return scenes.map((scene, index) => ({
+            // DOM의 실제 scene-card 순서대로 데이터 수집
+            const sceneCards = document.querySelectorAll('.scene-card');
+            return Array.from(sceneCards).map((card, index) => ({
                 narration: document.getElementById(`narration-${index}`).value,
                 image_prompt: document.getElementById(`image-prompt-${index}`).value
             }));
@@ -825,6 +855,11 @@
             const apiUrl = document.getElementById('apiUrl').value;
             const scenesData = collectScenes();
             const globalPrompt = document.getElementById('globalImagePrompt').value;
+
+            // 디버그: Scene 순서 확인
+            console.log('📹 영상 생성 시작 - Scene 순서:', scenesData.map((s, i) =>
+                `Scene ${i + 1}: ${s.narration.substring(0, 30)}...`
+            ));
 
             // 유효성 검사
             if (scenesData.some(s => !s.narration || !s.image_prompt)) {
