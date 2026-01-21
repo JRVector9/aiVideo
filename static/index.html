@@ -124,15 +124,25 @@
             transition: all 0.2s;
         }
 
-        .scene-card.dragging {
-            opacity: 0.5;
+        .scene-card:hover {
             border-color: #667eea;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+        }
+
+        .scene-card.dragging {
+            opacity: 0.4;
+            border-color: #667eea;
+            border-width: 3px;
+            transform: scale(0.98);
         }
 
         .scene-card.drag-over {
             border-color: #667eea;
             border-style: dashed;
+            border-width: 3px;
             background: #e8eaf6;
+            margin-top: 20px;
+            margin-bottom: 20px;
         }
 
         .scene-header {
@@ -153,13 +163,24 @@
 
         .drag-handle {
             cursor: grab;
-            font-size: 18px;
-            opacity: 0.5;
+            font-size: 20px;
+            opacity: 0.4;
             user-select: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+
+        .drag-handle:hover {
+            opacity: 1;
+            background: #e0e0e0;
+            transform: scale(1.1);
         }
 
         .drag-handle:active {
             cursor: grabbing;
+            background: #667eea;
+            color: white;
         }
 
         .btn {
@@ -457,7 +478,7 @@
     <div class="container">
         <div class="header">
             <h1>🎬 AI Video Generator</h1>
-            <p>FLUX + ElevenLabs + Whisper 기반 명언 영상 자동 생성</p>
+            <p>AI 기반 명언 영상 자동 생성 시스템</p>
         </div>
 
         <div class="content">
@@ -467,6 +488,17 @@
                     ⚙️ API 설정
                 </div>
                 <div id="api-settings" class="accordion-content">
+                    <!-- API 설정 사용법 -->
+                    <div style="margin-bottom: 20px; padding: 15px; background: linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 100%); border-left: 4px solid #4caf50; border-radius: 8px;">
+                        <div style="font-weight: 600; margin-bottom: 8px; color: #2e7d32;">📖 API 설정 사용법</div>
+                        <ul style="margin: 0; padding-left: 20px; color: #424242; font-size: 13px; line-height: 1.6;">
+                            <li><strong>배포된 서버 사용</strong> (기본): <code style="background: #fff; padding: 2px 6px; border-radius: 4px;">https://aivideo.jrai.space</code> 그대로 사용</li>
+                            <li><strong>로컬 개발 서버 사용</strong>: <code style="background: #fff; padding: 2px 6px; border-radius: 4px;">http://localhost:8000</code>로 변경 (FastAPI 서버 실행 필요)</li>
+                            <li><strong>파일명</strong>: 자동으로 날짜와 시간 기반으로 생성됩니다 (예: aiVideo_20260121_001.mp4)</li>
+                            <li><strong>주의</strong>: API URL 변경 시 해당 서버가 실행 중이어야 영상 생성이 가능합니다</li>
+                        </ul>
+                    </div>
+
                     <div class="settings-grid">
                         <div class="form-group">
                             <label>API Base URL</label>
@@ -612,34 +644,52 @@
         function handleDragStart(e, index) {
             draggedElement = e.currentTarget;
             e.dataTransfer.effectAllowed = 'move';
-            e.dataTransfer.setData('text/html', index);
-            e.currentTarget.classList.add('dragging');
+            e.dataTransfer.setData('text/plain', index.toString());
+
+            // 드래그 이미지 설정 (반투명 효과)
+            setTimeout(() => {
+                e.currentTarget.classList.add('dragging');
+            }, 0);
         }
 
         function handleDragOver(e) {
-            if (e.preventDefault) {
-                e.preventDefault();
+            e.preventDefault(); // 필수! 이게 없으면 drop이 작동하지 않음
+            e.stopPropagation();
+
+            if (e.currentTarget.classList.contains('scene-card') &&
+                !e.currentTarget.classList.contains('dragging')) {
+                e.dataTransfer.dropEffect = 'move';
+                e.currentTarget.classList.add('drag-over');
             }
-            e.dataTransfer.dropEffect = 'move';
+
             return false;
         }
 
         function handleDragEnter(e) {
-            e.currentTarget.classList.add('drag-over');
+            e.preventDefault();
+            if (e.currentTarget.classList.contains('scene-card') &&
+                !e.currentTarget.classList.contains('dragging')) {
+                e.currentTarget.classList.add('drag-over');
+            }
         }
 
         function handleDragLeave(e) {
-            e.currentTarget.classList.remove('drag-over');
+            // relatedTarget이 자식 요소가 아닐 때만 제거
+            if (!e.currentTarget.contains(e.relatedTarget)) {
+                e.currentTarget.classList.remove('drag-over');
+            }
         }
 
         function handleDrop(e, dropIndex) {
-            if (e.stopPropagation) {
-                e.stopPropagation();
-            }
+            e.preventDefault();
+            e.stopPropagation();
 
-            const dragIndex = parseInt(e.dataTransfer.getData('text/html'));
+            const dragIndex = parseInt(e.dataTransfer.getData('text/plain'));
 
-            if (dragIndex !== dropIndex) {
+            // drag-over 클래스 제거
+            e.currentTarget.classList.remove('drag-over');
+
+            if (!isNaN(dragIndex) && dragIndex !== dropIndex) {
                 // 배열 순서 변경
                 const draggedScene = scenes[dragIndex];
                 scenes.splice(dragIndex, 1);
@@ -684,12 +734,12 @@
                     <div class="form-group">
                         <label>나레이션 텍스트 (한국어)</label>
                         <textarea id="narration-${index}" placeholder="예: 인생은 고통이다." oninput="autoSave()">${scene.narration || ''}</textarea>
-                        <div class="hint">ElevenLabs TTS로 음성 생성됩니다</div>
+                        <div class="hint">AI 음성으로 변환됩니다</div>
                     </div>
                     <div class="form-group">
                         <label>이미지 프롬프트 (영어)</label>
                         <textarea id="image-prompt-${index}" placeholder="예: A wise philosopher contemplating life in darkness" oninput="autoSave()">${scene.image_prompt || ''}</textarea>
-                        <div class="hint">FLUX Schnell로 이미지 생성됩니다 (전체 프롬프트가 자동으로 추가됨)</div>
+                        <div class="hint">전체 프롬프트가 자동으로 추가됩니다</div>
                     </div>
                 </div>
             `).join('');
