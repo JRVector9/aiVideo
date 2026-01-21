@@ -78,13 +78,13 @@
         }
 
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 12px; /* Reduced from 20px */
         }
 
         label {
             display: block;
             font-weight: 500;
-            margin-bottom: 8px;
+            margin-bottom: 6px; /* Reduced from 8px */
             color: #555;
             font-size: 14px;
         }
@@ -93,7 +93,7 @@
         input[type="number"],
         textarea {
             width: 100%;
-            padding: 12px;
+            padding: 10px; /* Reduced from 12px */
             border: 2px solid #e0e0e0;
             border-radius: 8px;
             font-size: 14px;
@@ -110,29 +110,56 @@
 
         textarea {
             resize: vertical;
-            min-height: 80px;
+            min-height: 60px; /* Reduced from 80px */
         }
 
         .scene-card {
             background: #f8f9fa;
             border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 15px;
+            padding: 15px; /* Reduced from 20px */
+            margin-bottom: 10px; /* Reduced from 15px */
             border: 2px solid #e0e0e0;
             position: relative;
+            cursor: move;
+            transition: all 0.2s;
+        }
+
+        .scene-card.dragging {
+            opacity: 0.5;
+            border-color: #667eea;
+        }
+
+        .scene-card.drag-over {
+            border-color: #667eea;
+            border-style: dashed;
+            background: #e8eaf6;
         }
 
         .scene-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px;
+            margin-bottom: 12px; /* Reduced from 15px */
         }
 
         .scene-number {
             font-weight: 600;
             color: #667eea;
             font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .drag-handle {
+            cursor: grab;
+            font-size: 18px;
+            opacity: 0.5;
+            user-select: none;
+        }
+
+        .drag-handle:active {
+            cursor: grabbing;
         }
 
         .btn {
@@ -183,6 +210,17 @@
 
         .btn-success:hover {
             background: #218838;
+        }
+
+        .btn-info {
+            background: #17a2b8;
+            color: white;
+            padding: 8px 16px;
+            font-size: 13px;
+        }
+
+        .btn-info:hover {
+            background: #138496;
         }
 
         .btn:disabled {
@@ -296,9 +334,121 @@
             margin-top: 4px;
         }
 
+        .global-prompt-section {
+            background: #e8f4f8;
+            border: 2px solid #17a2b8;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .global-prompt-section label {
+            color: #17a2b8;
+            font-weight: 600;
+        }
+
+        .saved-indicator {
+            display: inline-block;
+            font-size: 12px;
+            color: #28a745;
+            margin-left: 10px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .saved-indicator.show {
+            opacity: 1;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            overflow: auto;
+        }
+
+        .modal.show {
+            display: block;
+        }
+
+        .modal-content {
+            background: white;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 16px;
+            max-width: 800px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .modal-header h2 {
+            font-size: 24px;
+            color: #333;
+        }
+
+        .modal-close {
+            font-size: 28px;
+            font-weight: bold;
+            color: #6c757d;
+            cursor: pointer;
+            border: none;
+            background: none;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-close:hover {
+            color: #dc3545;
+        }
+
+        .prompt-history-item {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .prompt-history-item h4 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .prompt-history-item pre {
+            background: white;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
         @media (max-width: 768px) {
             .settings-grid {
                 grid-template-columns: 1fr;
+            }
+
+            .modal-content {
+                margin: 10% 15px;
             }
         }
     </style>
@@ -337,10 +487,22 @@
             <div class="section">
                 <div class="section-title">
                     🎞️ Scene 설정
+                    <span class="saved-indicator" id="savedIndicator">✓ 자동 저장됨</span>
                 </div>
+
+                <!-- Global Image Prompt -->
+                <div class="global-prompt-section">
+                    <div class="form-group">
+                        <label>🌐 전체 이미지 공통 프롬프트 (Global Style)</label>
+                        <textarea id="globalImagePrompt" placeholder="예: Minimalist Notion-style illustration, pencil sketch aesthetic, vintage paper background..." oninput="autoSave()"></textarea>
+                        <div class="hint">모든 Scene의 이미지 프롬프트에 자동으로 추가됩니다</div>
+                    </div>
+                </div>
+
                 <div id="scenes-container"></div>
                 <div class="button-group">
                     <button class="btn btn-secondary" onclick="addScene()">+ Scene 추가</button>
+                    <button class="btn btn-success" onclick="saveScenes()">💾 수동 저장</button>
                     <button class="btn btn-primary" onclick="generateVideo()">🎬 영상 생성</button>
                 </div>
             </div>
@@ -359,21 +521,80 @@
         </div>
     </div>
 
+    <!-- Prompt History Modal -->
+    <div id="promptModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📝 프롬프트 히스토리</h2>
+                <button class="modal-close" onclick="closePromptModal()">&times;</button>
+            </div>
+            <div id="promptHistoryContent"></div>
+        </div>
+    </div>
+
     <script>
         let scenes = [];
+        let globalImagePrompt = '';
+        let draggedElement = null;
 
-        // 초기 Scene 추가
+        // LocalStorage 키
+        const STORAGE_KEY = 'aiVideo_scenes';
+        const GLOBAL_PROMPT_KEY = 'aiVideo_globalPrompt';
+        const PROMPT_HISTORY_KEY = 'aiVideo_promptHistory';
+
+        // 초기화
         function initScenes() {
-            scenes = [
-                { narration: '인생은 고통이다.', image_prompt: 'A wise philosopher contemplating life in darkness' }
-            ];
+            // LocalStorage에서 복원
+            const savedScenes = localStorage.getItem(STORAGE_KEY);
+            const savedGlobalPrompt = localStorage.getItem(GLOBAL_PROMPT_KEY);
+
+            if (savedScenes) {
+                scenes = JSON.parse(savedScenes);
+                showStatus('✓ 이전 작업을 불러왔습니다.', 'info');
+            } else {
+                scenes = [
+                    { narration: '인생은 고통이다.', image_prompt: 'A wise philosopher contemplating life in darkness' }
+                ];
+            }
+
+            if (savedGlobalPrompt) {
+                globalImagePrompt = savedGlobalPrompt;
+                document.getElementById('globalImagePrompt').value = globalImagePrompt;
+            }
+
             renderScenes();
+        }
+
+        // 자동 저장
+        function autoSave() {
+            // Global prompt 저장
+            globalImagePrompt = document.getElementById('globalImagePrompt').value;
+            localStorage.setItem(GLOBAL_PROMPT_KEY, globalImagePrompt);
+
+            // Scenes 저장
+            const currentScenes = collectScenes();
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(currentScenes));
+            scenes = currentScenes;
+
+            // 저장 인디케이터 표시
+            const indicator = document.getElementById('savedIndicator');
+            indicator.classList.add('show');
+            setTimeout(() => {
+                indicator.classList.remove('show');
+            }, 2000);
+        }
+
+        // 수동 저장
+        function saveScenes() {
+            autoSave();
+            showStatus('✓ 저장되었습니다.', 'success');
         }
 
         // Scene 추가
         function addScene() {
             scenes.push({ narration: '', image_prompt: '' });
             renderScenes();
+            autoSave();
         }
 
         // Scene 삭제
@@ -384,26 +605,91 @@
             }
             scenes.splice(index, 1);
             renderScenes();
+            autoSave();
+        }
+
+        // Drag & Drop 이벤트 핸들러
+        function handleDragStart(e, index) {
+            draggedElement = e.currentTarget;
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/html', index);
+            e.currentTarget.classList.add('dragging');
+        }
+
+        function handleDragOver(e) {
+            if (e.preventDefault) {
+                e.preventDefault();
+            }
+            e.dataTransfer.dropEffect = 'move';
+            return false;
+        }
+
+        function handleDragEnter(e) {
+            e.currentTarget.classList.add('drag-over');
+        }
+
+        function handleDragLeave(e) {
+            e.currentTarget.classList.remove('drag-over');
+        }
+
+        function handleDrop(e, dropIndex) {
+            if (e.stopPropagation) {
+                e.stopPropagation();
+            }
+
+            const dragIndex = parseInt(e.dataTransfer.getData('text/html'));
+
+            if (dragIndex !== dropIndex) {
+                // 배열 순서 변경
+                const draggedScene = scenes[dragIndex];
+                scenes.splice(dragIndex, 1);
+                scenes.splice(dropIndex, 0, draggedScene);
+
+                renderScenes();
+                autoSave();
+                showStatus('✓ Scene 순서가 변경되었습니다.', 'success');
+            }
+
+            return false;
+        }
+
+        function handleDragEnd(e) {
+            e.currentTarget.classList.remove('dragging');
+
+            // 모든 drag-over 클래스 제거
+            document.querySelectorAll('.scene-card').forEach(card => {
+                card.classList.remove('drag-over');
+            });
         }
 
         // Scene 렌더링
         function renderScenes() {
             const container = document.getElementById('scenes-container');
             container.innerHTML = scenes.map((scene, index) => `
-                <div class="scene-card">
+                <div class="scene-card"
+                     draggable="true"
+                     ondragstart="handleDragStart(event, ${index})"
+                     ondragover="handleDragOver(event)"
+                     ondragenter="handleDragEnter(event)"
+                     ondragleave="handleDragLeave(event)"
+                     ondrop="handleDrop(event, ${index})"
+                     ondragend="handleDragEnd(event)">
                     <div class="scene-header">
-                        <span class="scene-number">Scene ${index + 1}</span>
+                        <span class="scene-number">
+                            <span class="drag-handle">☰</span>
+                            Scene ${index + 1}
+                        </span>
                         <button class="btn btn-danger" onclick="removeScene(${index})">삭제</button>
                     </div>
                     <div class="form-group">
                         <label>나레이션 텍스트 (한국어)</label>
-                        <textarea id="narration-${index}" placeholder="예: 인생은 고통이다.">${scene.narration || ''}</textarea>
+                        <textarea id="narration-${index}" placeholder="예: 인생은 고통이다." oninput="autoSave()">${scene.narration || ''}</textarea>
                         <div class="hint">ElevenLabs TTS로 음성 생성됩니다</div>
                     </div>
                     <div class="form-group">
                         <label>이미지 프롬프트 (영어)</label>
-                        <textarea id="image-prompt-${index}" placeholder="예: A wise philosopher contemplating life in darkness">${scene.image_prompt || ''}</textarea>
-                        <div class="hint">FLUX Schnell로 이미지 생성됩니다</div>
+                        <textarea id="image-prompt-${index}" placeholder="예: A wise philosopher contemplating life in darkness" oninput="autoSave()">${scene.image_prompt || ''}</textarea>
+                        <div class="hint">FLUX Schnell로 이미지 생성됩니다 (전체 프롬프트가 자동으로 추가됨)</div>
                     </div>
                 </div>
             `).join('');
@@ -417,6 +703,69 @@
             }));
         }
 
+        // 프롬프트 히스토리 저장
+        function savePromptHistory(filename, scenesData, globalPrompt) {
+            const history = JSON.parse(localStorage.getItem(PROMPT_HISTORY_KEY) || '{}');
+
+            history[filename] = {
+                timestamp: new Date().toISOString(),
+                globalPrompt: globalPrompt,
+                scenes: scenesData,
+                scenesCount: scenesData.length
+            };
+
+            localStorage.setItem(PROMPT_HISTORY_KEY, JSON.stringify(history));
+        }
+
+        // 프롬프트 히스토리 보기
+        function viewPromptHistory(filename) {
+            const history = JSON.parse(localStorage.getItem(PROMPT_HISTORY_KEY) || '{}');
+            const promptData = history[filename];
+
+            if (!promptData) {
+                showStatus('해당 영상의 프롬프트 정보가 없습니다.', 'error');
+                return;
+            }
+
+            const content = document.getElementById('promptHistoryContent');
+            content.innerHTML = `
+                <div class="prompt-history-item">
+                    <h4>📅 생성 시간</h4>
+                    <pre>${new Date(promptData.timestamp).toLocaleString('ko-KR')}</pre>
+                </div>
+                <div class="prompt-history-item">
+                    <h4>🌐 전체 이미지 프롬프트</h4>
+                    <pre>${promptData.globalPrompt || '(없음)'}</pre>
+                </div>
+                ${promptData.scenes.map((scene, index) => `
+                    <div class="prompt-history-item">
+                        <h4>Scene ${index + 1}</h4>
+                        <strong>나레이션:</strong>
+                        <pre>${scene.narration}</pre>
+                        <strong>이미지 프롬프트:</strong>
+                        <pre>${scene.image_prompt}</pre>
+                        ${promptData.globalPrompt ? `<strong>최종 합성 프롬프트:</strong>
+                        <pre>${scene.image_prompt}, ${promptData.globalPrompt}</pre>` : ''}
+                    </div>
+                `).join('')}
+            `;
+
+            document.getElementById('promptModal').classList.add('show');
+        }
+
+        // 모달 닫기
+        function closePromptModal() {
+            document.getElementById('promptModal').classList.remove('show');
+        }
+
+        // 모달 외부 클릭 시 닫기
+        window.onclick = function(event) {
+            const modal = document.getElementById('promptModal');
+            if (event.target === modal) {
+                closePromptModal();
+            }
+        }
+
         // 진행 상태 추적 변수
         let pollingInterval = null;
         let progressStartTime = null;
@@ -425,12 +774,21 @@
         async function generateVideo() {
             const apiUrl = document.getElementById('apiUrl').value;
             const scenesData = collectScenes();
+            const globalPrompt = document.getElementById('globalImagePrompt').value;
 
             // 유효성 검사
             if (scenesData.some(s => !s.narration || !s.image_prompt)) {
                 showStatus('모든 Scene의 나레이션과 이미지 프롬프트를 입력해주세요.', 'error');
                 return;
             }
+
+            // Global prompt를 각 scene의 image_prompt에 추가
+            const processedScenes = scenesData.map(scene => ({
+                narration: scene.narration,
+                image_prompt: globalPrompt
+                    ? `${scene.image_prompt}, ${globalPrompt}`
+                    : scene.image_prompt
+            }));
 
             try {
                 // 작업 생성 요청
@@ -440,7 +798,7 @@
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        scenes: scenesData,
+                        scenes: processedScenes,
                         clean_temp: true
                     })
                 });
@@ -451,7 +809,6 @@
                         const data = await response.json();
                         showStatus(`❌ 오류: ${data.detail}`, 'error');
                     } else {
-                        const text = await response.text();
                         showStatus(`❌ 서버 오류 (${response.status})`, 'error');
                     }
                     return;
@@ -460,9 +817,10 @@
                 const data = await response.json();
 
                 if (data.status === 'accepted' && data.job_id) {
-                    // 작업 ID와 파일명 표시
+                    // 프롬프트 히스토리 저장
+                    savePromptHistory(data.filename, scenesData, globalPrompt);
+
                     showStatus(`🚀 영상 생성 시작: ${data.filename}`, 'info');
-                    // 작업 ID를 받았으면 폴링 시작
                     startJobPolling(apiUrl, data.job_id, scenesData.length);
                 } else {
                     showStatus('❌ 예상치 못한 응답 형식', 'error');
@@ -480,10 +838,8 @@
 
             showStatus('🚀 작업이 시작되었습니다. 진행 상태를 확인하고 있습니다...', 'info');
 
-            // 즉시 한 번 조회
             pollJobStatus(apiUrl, jobId, scenesCount, estimatedMinutes);
 
-            // 5초마다 폴링
             pollingInterval = setInterval(() => {
                 pollJobStatus(apiUrl, jobId, scenesCount, estimatedMinutes);
             }, 5000);
@@ -510,7 +866,6 @@
                     stopPolling();
                     showStatus(`❌ 영상 생성 실패: ${job.error}`, 'error');
                 } else {
-                    // 진행 중
                     showJobProgress(job, scenesCount, estimatedMinutes, elapsedSeconds);
                 }
 
@@ -557,7 +912,6 @@
             `;
         }
 
-
         // 영상 목록 로드
         async function loadVideos() {
             const apiUrl = document.getElementById('apiUrl').value;
@@ -579,7 +933,10 @@
                             크기: ${(video.size / 1024 / 1024).toFixed(2)} MB<br>
                             생성: ${new Date(video.created * 1000).toLocaleString('ko-KR')}
                         </div>
-                        <button class="btn btn-success" onclick="downloadVideo('${video.filename}')">⬇️ 다운로드</button>
+                        <div class="button-group">
+                            <button class="btn btn-success" onclick="downloadVideo('${video.filename}')">⬇️ 다운로드</button>
+                            <button class="btn btn-info" onclick="viewPromptHistory('${video.filename}')">📝 프롬프트</button>
+                        </div>
                     </div>
                 `).join('');
             } catch (error) {
