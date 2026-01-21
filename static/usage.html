@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>사용법 - AI Video Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            color: #667eea;
+            font-size: 32px;
+            font-weight: 700;
+        }
+
+        .btn-back {
+            display: inline-block;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn-back:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .content {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+
+        .section:last-child {
+            margin-bottom: 0;
+        }
+
+        .section-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .engine-info {
+            padding: 20px;
+            background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+            border-left: 4px solid #667eea;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .engine-grid {
+            display: grid;
+            gap: 16px;
+            color: #2d3748;
+            font-size: 15px;
+            line-height: 1.8;
+        }
+
+        .engine-item {
+            display: flex;
+            align-items: start;
+            gap: 12px;
+        }
+
+        .engine-label {
+            min-width: 160px;
+            font-weight: 600;
+            color: #667eea;
+            flex-shrink: 0;
+        }
+
+        .engine-description {
+            flex: 1;
+        }
+
+        .engine-description strong {
+            color: #2d3748;
+        }
+
+        .api-guide {
+            padding: 20px;
+            background: linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 100%);
+            border-left: 4px solid #4caf50;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .api-guide h3 {
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #2e7d32;
+            font-size: 18px;
+        }
+
+        .api-guide ul {
+            margin: 0;
+            padding-left: 24px;
+            color: #424242;
+            font-size: 14px;
+            line-height: 1.8;
+        }
+
+        .api-guide li {
+            margin-bottom: 8px;
+        }
+
+        .api-guide code {
+            background: #fff;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+
+        .workflow-section {
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .workflow-section h3 {
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #4a5568;
+            font-size: 18px;
+        }
+
+        .workflow-steps {
+            display: grid;
+            gap: 12px;
+        }
+
+        .workflow-step {
+            display: flex;
+            align-items: start;
+            gap: 12px;
+            padding: 12px;
+            background: white;
+            border-radius: 8px;
+            border-left: 3px solid #667eea;
+        }
+
+        .step-number {
+            background: #667eea;
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .step-content {
+            flex: 1;
+            color: #2d3748;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .tips-section {
+            padding: 20px;
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            border-radius: 12px;
+        }
+
+        .tips-section h3 {
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #856404;
+            font-size: 18px;
+        }
+
+        .tips-section ul {
+            margin: 0;
+            padding-left: 24px;
+            color: #856404;
+            font-size: 14px;
+            line-height: 1.8;
+        }
+
+        .tips-section li {
+            margin-bottom: 8px;
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 20px;
+                text-align: center;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .engine-item {
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .engine-label {
+                min-width: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📚 AI Video Generator 사용법</h1>
+            <a href="index.html" class="btn-back">← 메인으로 돌아가기</a>
+        </div>
+
+        <div class="content">
+            <!-- 1. 사용 엔진 정보 -->
+            <div class="section">
+                <div class="section-title">🎨 사용 엔진 정보</div>
+                <div class="engine-info">
+                    <div class="engine-grid">
+                        <div class="engine-item">
+                            <div class="engine-label">🖼️ 이미지 생성</div>
+                            <div class="engine-description">
+                                <strong>ComfyUI FLUX Schnell</strong><br>
+                                Notion 스타일 미니멀 일러스트 생성. 고품질 4-step 디퓨전 모델로 빠르고 정확한 이미지 렌더링.
+                            </div>
+                        </div>
+                        <div class="engine-item">
+                            <div class="engine-label">🎙️ 음성 생성 (TTS)</div>
+                            <div class="engine-description">
+                                <strong>ElevenLabs</strong><br>
+                                multilingual-v2 모델 사용. 자연스러운 한국어 나레이션 생성. 높은 감정 표현력과 명확한 발음.
+                            </div>
+                        </div>
+                        <div class="engine-item">
+                            <div class="engine-label">📝 자막 생성</div>
+                            <div class="engine-description">
+                                <strong>Whisper large-v3</strong><br>
+                                OpenAI Whisper 최신 모델. 정확한 타임스탬프 기반 자막 동기화. 한국어 음성 인식 최적화.
+                            </div>
+                        </div>
+                        <div class="engine-item">
+                            <div class="engine-label">🎬 영상 합성</div>
+                            <div class="engine-description">
+                                <strong>FFmpeg</strong><br>
+                                전문가급 영상 합성 도구. 이미지 + 오디오 + 자막을 하나의 MP4로 통합. Fade In/Out 효과 및 BGM 믹싱 지원.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. API 설정 -->
+            <div class="section">
+                <div class="section-title">⚙️ API 설정</div>
+                <div class="api-guide">
+                    <h3>📖 API 설정 방법</h3>
+                    <ul>
+                        <li><strong>배포된 서버 사용</strong> (기본 권장): <code>https://aivideo.jrai.space</code>를 그대로 사용하세요. 별도 설정 불필요합니다.</li>
+                        <li><strong>로컬 개발 서버 사용</strong>: <code>http://localhost:8000</code>로 변경. FastAPI 백엔드 서버가 로컬에서 실행 중이어야 합니다.</li>
+                        <li><strong>파일명 자동 생성</strong>: 영상은 <code>aiVideo_YYYYMMDD_001.mp4</code> 형식으로 자동 생성됩니다 (예: aiVideo_20260121_001.mp4).</li>
+                        <li><strong>주의사항</strong>: API URL을 변경한 경우, 해당 서버가 실행 중이어야 영상 생성이 정상적으로 작동합니다.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 3. 영상 제작 워크플로우 -->
+            <div class="section">
+                <div class="section-title">🎬 영상 제작 워크플로우</div>
+                <div class="workflow-section">
+                    <h3>단계별 프로세스</h3>
+                    <div class="workflow-steps">
+                        <div class="workflow-step">
+                            <div class="step-number">1</div>
+                            <div class="step-content">
+                                <strong>전체 이미지 프롬프트 입력 (선택)</strong><br>
+                                모든 Scene에 공통으로 적용할 스타일을 입력하세요. 예: "Minimalist Notion-style illustration, pencil sketch"
+                            </div>
+                        </div>
+                        <div class="workflow-step">
+                            <div class="step-number">2</div>
+                            <div class="step-content">
+                                <strong>Scene 추가 및 입력</strong><br>
+                                나레이션(한국어)과 이미지 프롬프트(영어)를 각 Scene에 입력하세요. 자동 저장되므로 새로고침해도 안전합니다.
+                            </div>
+                        </div>
+                        <div class="workflow-step">
+                            <div class="step-number">3</div>
+                            <div class="step-content">
+                                <strong>Scene 순서 조정 (선택)</strong><br>
+                                Scene 카드 좌측의 ☰ 핸들을 드래그하여 순서를 자유롭게 변경할 수 있습니다.
+                            </div>
+                        </div>
+                        <div class="workflow-step">
+                            <div class="step-number">4</div>
+                            <div class="step-content">
+                                <strong>영상 생성 시작</strong><br>
+                                "🎬 영상 생성" 버튼 클릭. 서버에서 이미지 생성 → 음성 생성 → 자막 생성 → 영상 합성 순으로 진행됩니다.
+                            </div>
+                        </div>
+                        <div class="workflow-step">
+                            <div class="step-number">5</div>
+                            <div class="step-content">
+                                <strong>진행 상태 확인</strong><br>
+                                실시간 진행률이 표시됩니다. Scene 개수에 따라 5-10분 소요될 수 있습니다.
+                            </div>
+                        </div>
+                        <div class="workflow-step">
+                            <div class="step-number">6</div>
+                            <div class="step-content">
+                                <strong>영상 다운로드</strong><br>
+                                완료된 영상은 "생성된 영상 목록"에 표시됩니다. 다운로드 버튼으로 저장하세요.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. 유용한 팁 -->
+            <div class="section">
+                <div class="section-title">💡 유용한 팁</div>
+                <div class="tips-section">
+                    <h3>⚡ 효율적인 사용 방법</h3>
+                    <ul>
+                        <li><strong>프롬프트 작성 팁</strong>: 이미지 프롬프트는 구체적일수록 좋습니다. "A wise philosopher"보다 "A wise philosopher sitting on a stone, contemplating the stars"가 더 정확한 결과를 생성합니다.</li>
+                        <li><strong>전체 프롬프트 활용</strong>: 모든 Scene에 동일한 스타일을 적용하려면 전체 이미지 프롬프트에 "pencil sketch, vintage paper, black and white"처럼 입력하세요.</li>
+                        <li><strong>자동 저장 기능</strong>: 입력한 내용은 자동으로 브라우저에 저장됩니다. 새로고침해도 데이터가 유지됩니다.</li>
+                        <li><strong>Scene 재사용</strong>: 프롬프트 히스토리 버튼(📝)을 클릭하면 이전에 사용한 프롬프트를 확인할 수 있습니다.</li>
+                        <li><strong>순서 변경</strong>: 영상 제작 중에는 순서를 변경할 수 없으니, 미리 Scene 순서를 확정하세요.</li>
+                        <li><strong>예상 소요 시간</strong>: Scene 1개당 약 1-2분 소요. 10개 Scene 영상은 약 10-15분 정도 걸립니다.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 5. 문제 해결 -->
+            <div class="section">
+                <div class="section-title">🔧 문제 해결</div>
+                <div class="workflow-section">
+                    <h3>자주 발생하는 문제</h3>
+                    <div class="workflow-steps">
+                        <div class="workflow-step">
+                            <div class="step-number">Q</div>
+                            <div class="step-content">
+                                <strong>영상 생성이 시작되지 않아요</strong><br>
+                                API URL이 올바른지 확인하세요. 배포 서버를 사용하는 경우 <code>https://aivideo.jrai.space</code>로 설정되어 있어야 합니다.
+                            </div>
+                        </div>
+                        <div class="workflow-step">
+                            <div class="step-number">Q</div>
+                            <div class="step-content">
+                                <strong>진행 상태가 멈췄어요</strong><br>
+                                서버 과부하일 수 있습니다. 잠시 기다렸다가 페이지를 새로고침하고 "목록 새로고침" 버튼을 클릭하세요.
+                            </div>
+                        </div>
+                        <div class="workflow-step">
+                            <div class="step-number">Q</div>
+                            <div class="step-content">
+                                <strong>저장한 Scene이 사라졌어요</strong><br>
+                                브라우저의 LocalStorage를 삭제했거나, 다른 브라우저/시크릿 모드를 사용한 경우입니다. 동일한 브라우저를 사용하세요.
+                            </div>
+                        </div>
+                        <div class="workflow-step">
+                            <div class="step-number">Q</div>
+                            <div class="step-content">
+                                <strong>Drag & Drop이 작동하지 않아요</strong><br>
+                                Scene 카드의 ☰ 핸들을 정확히 클릭하고 드래그하세요. 모바일에서는 길게 터치 후 드래그하세요.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
