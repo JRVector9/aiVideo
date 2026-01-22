@@ -69,6 +69,13 @@ TTS_CHANNELS = 1
 TTS_BIT_DEPTH = 16
 
 # ===========================
+# DeepL Translation Configuration
+# ===========================
+DEEPL_API_KEY = os.getenv("DEEPL_API_KEY", "")
+DEEPL_API_URL = "https://api-free.deepl.com/v2/translate"  # Free tier endpoint
+# For Pro tier use: "https://api.deepl.com/v2/translate"
+
+# ===========================
 # Whisper Configuration
 # ===========================
 WHISPER_MODEL = "large-v3"

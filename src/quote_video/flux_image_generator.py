@@ -19,6 +19,7 @@ from .config import (
     IMAGE_STYLE_PROMPT,
     TEMP_DIR
 )
+from .translator import Translator
 
 
 class FluxImageGenerator:
@@ -33,6 +34,7 @@ class FluxImageGenerator:
         self.ws_endpoint = COMFYUI_WS_ENDPOINT
         self.view_endpoint = COMFYUI_VIEW_ENDPOINT
         self.history_endpoint = COMFYUI_HISTORY_ENDPOINT
+        self.translator = Translator()
 
         if server_url:
             self.api_endpoint = f"{server_url}/prompt"
@@ -51,7 +53,7 @@ class FluxImageGenerator:
         FLUX 모델로 이미지 생성
 
         Args:
-            prompt: 이미지 생성 프롬프트
+            prompt: 이미지 생성 프롬프트 (한글/영어 모두 가능)
             output_path: 저장할 이미지 경로
             style_prompt: 스타일 프롬프트 (기본값: config의 IMAGE_STYLE_PROMPT)
             seed: 시드값 (-1이면 랜덤)
@@ -60,6 +62,14 @@ class FluxImageGenerator:
         Returns:
             저장된 이미지 파일 경로
         """
+        # 한글 프롬프트 자동 번역
+        original_prompt = prompt
+        prompt = self.translator.translate_to_english(prompt)
+
+        if original_prompt != prompt:
+            print(f"[FluxImageGenerator] Original (KR): {original_prompt}")
+            print(f"[FluxImageGenerator] Translated (EN): {prompt}")
+
         # 프롬프트 결합
         full_prompt = prompt
         if style_prompt:
@@ -68,7 +78,7 @@ class FluxImageGenerator:
             full_prompt = f"{prompt}, {IMAGE_STYLE_PROMPT}"
 
         print(f"[FluxImageGenerator] Generating image...")
-        print(f"[FluxImageGenerator] Prompt: {full_prompt[:100]}...")
+        print(f"[FluxImageGenerator] Final prompt: {full_prompt[:100]}...")
 
         # 워크플로우 준비
         workflow = self._prepare_workflow(full_prompt, seed)
