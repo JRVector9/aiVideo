@@ -47,7 +47,7 @@ class FluxImageGenerator:
         output_path: Path,
         style_prompt: Optional[str] = None,
         seed: int = -1,
-        timeout: int = 300,
+        timeout: Optional[int] = None,
         width: int = 1920,
         height: int = 1080
     ) -> Path:
@@ -59,7 +59,7 @@ class FluxImageGenerator:
             output_path: 저장할 이미지 경로
             style_prompt: 스타일 프롬프트 (기본값: config의 IMAGE_STYLE_PROMPT)
             seed: 시드값 (-1이면 랜덤)
-            timeout: 타임아웃 (초)
+            timeout: 타임아웃 (초). None이면 무제한 대기 (비동기 모드, 기본값)
             width: 이미지 가로 해상도 (기본값: 1920)
             height: 이미지 세로 해상도 (기본값: 1080)
 
@@ -144,11 +144,24 @@ class FluxImageGenerator:
         print(f"[FluxImageGenerator] Prompt queued: {prompt_id}")
         return prompt_id
 
-    def _wait_for_completion(self, prompt_id: str, timeout: int) -> bytes:
-        """생성 완료 대기 및 이미지 다운로드"""
-        start_time = time.time()
+    def _wait_for_completion(self, prompt_id: str, timeout: Optional[int] = None) -> bytes:
+        """
+        생성 완료 대기 및 이미지 다운로드 (비동기 처리)
 
-        while time.time() - start_time < timeout:
+        Args:
+            prompt_id: ComfyUI 프롬프트 ID
+            timeout: 타임아웃 (초). None이면 무제한 대기 (비동기 모드)
+        """
+        start_time = time.time()
+        poll_count = 0
+
+        while True:
+            # 타임아웃 체크 (timeout이 설정된 경우에만)
+            if timeout is not None and time.time() - start_time > timeout:
+                raise TimeoutError(f"Image generation timed out after {timeout} seconds")
+
+            poll_count += 1
+
             # 히스토리 확인
             history_url = f"{self.history_endpoint}/{prompt_id}"
             response = requests.get(history_url)
@@ -157,6 +170,12 @@ class FluxImageGenerator:
                 history = response.json()
 
                 if prompt_id in history:
+                    # 에러 체크
+                    status = history[prompt_id].get("status", {})
+                    if status.get("status_str") == "error":
+                        error_msg = status.get("messages", [["Unknown error"]])
+                        raise RuntimeError(f"Image generation failed: {error_msg}")
+
                     outputs = history[prompt_id].get("outputs", {})
 
                     # SaveImage 노드의 출력 확인 (노드 ID "9")
@@ -167,13 +186,19 @@ class FluxImageGenerator:
                             filename = image_info["filename"]
                             subfolder = image_info.get("subfolder", "")
 
+                            elapsed = time.time() - start_time
+                            print(f"[FluxImageGenerator] Completed in {elapsed:.1f}s (polls: {poll_count})")
+
                             # 이미지 다운로드
                             return self._download_image(filename, subfolder)
 
-            # 대기
-            time.sleep(2)
+            # 진행 상황 로깅 (10회마다)
+            if poll_count % 10 == 0:
+                elapsed = time.time() - start_time
+                print(f"[FluxImageGenerator] Still generating... ({elapsed:.0f}s elapsed)")
 
-        raise TimeoutError(f"Image generation timed out after {timeout} seconds")
+            # 대기 (서버 부하 방지)
+            time.sleep(2)
 
     def _download_image(self, filename: str, subfolder: str = "") -> bytes:
         """이미지 다운로드"""
