@@ -47,7 +47,9 @@ class FluxImageGenerator:
         output_path: Path,
         style_prompt: Optional[str] = None,
         seed: int = -1,
-        timeout: int = 300
+        timeout: int = 300,
+        width: int = 1920,
+        height: int = 1080
     ) -> Path:
         """
         FLUX 모델로 이미지 생성
@@ -58,6 +60,8 @@ class FluxImageGenerator:
             style_prompt: 스타일 프롬프트 (기본값: config의 IMAGE_STYLE_PROMPT)
             seed: 시드값 (-1이면 랜덤)
             timeout: 타임아웃 (초)
+            width: 이미지 가로 해상도 (기본값: 1920)
+            height: 이미지 세로 해상도 (기본값: 1080)
 
         Returns:
             저장된 이미지 파일 경로
@@ -78,10 +82,11 @@ class FluxImageGenerator:
             full_prompt = f"{prompt}, {IMAGE_STYLE_PROMPT}"
 
         print(f"[FluxImageGenerator] Generating image...")
+        print(f"[FluxImageGenerator] Resolution: {width}x{height}")
         print(f"[FluxImageGenerator] Final prompt: {full_prompt[:100]}...")
 
         # 워크플로우 준비
-        workflow = self._prepare_workflow(full_prompt, seed)
+        workflow = self._prepare_workflow(full_prompt, seed, width, height)
 
         # 이미지 생성 요청
         prompt_id = self._queue_prompt(workflow)
@@ -99,12 +104,16 @@ class FluxImageGenerator:
         print(f"[FluxImageGenerator] Image saved: {output_path}")
         return output_path
 
-    def _prepare_workflow(self, prompt: str, seed: int) -> Dict[str, Any]:
+    def _prepare_workflow(self, prompt: str, seed: int, width: int = 1920, height: int = 1080) -> Dict[str, Any]:
         """워크플로우 준비"""
         workflow = json.loads(json.dumps(DEFAULT_FLUX_WORKFLOW))
 
         # 프롬프트 설정 (Node 7: CLIPTextEncode)
         workflow["7"]["inputs"]["text"] = prompt
+
+        # 해상도 설정 (Node 6: EmptyLatentImage)
+        workflow["6"]["inputs"]["width"] = width
+        workflow["6"]["inputs"]["height"] = height
 
         # 시드 설정
         if seed != -1:

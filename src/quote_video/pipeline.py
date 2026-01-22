@@ -50,7 +50,9 @@ class QuoteVideoPipeline:
         output_name: str,
         bgm_path: Optional[Path] = None,
         clean_temp: bool = True,
-        progress_callback: Optional[callable] = None
+        progress_callback: Optional[callable] = None,
+        image_width: int = 1920,
+        image_height: int = 1080
     ) -> Path:
         """
         씬 데이터로부터 최종 영상 생성
@@ -61,6 +63,8 @@ class QuoteVideoPipeline:
             bgm_path: 배경음악 파일 경로
             clean_temp: 임시 파일 삭제 여부
             progress_callback: 진행 상태 콜백 함수 (stage, progress)
+            image_width: 이미지 가로 해상도 (기본값: 1920)
+            image_height: 이미지 세로 해상도 (기본값: 1080)
 
         Returns:
             최종 영상 파일 경로
@@ -84,7 +88,9 @@ class QuoteVideoPipeline:
                     int(20 + (i-1) * 60 / total_scenes)
                 )
 
-            scene_video = self._process_scene(scene, i, progress_callback, total_scenes)
+            scene_video = self._process_scene(
+                scene, i, progress_callback, total_scenes, image_width, image_height
+            )
             scene_videos.append(scene_video)
 
         # 최종 영상 합성
@@ -111,7 +117,15 @@ class QuoteVideoPipeline:
 
         return final_video
 
-    def _process_scene(self, scene: Scene, scene_num: int, progress_callback: Optional[callable] = None, total_scenes: int = 1) -> Path:
+    def _process_scene(
+        self,
+        scene: Scene,
+        scene_num: int,
+        progress_callback: Optional[callable] = None,
+        total_scenes: int = 1,
+        image_width: int = 1920,
+        image_height: int = 1080
+    ) -> Path:
         """단일 씬 처리"""
         scene_prefix = f"scene_{scene_num:03d}"
         base_progress = 20 + (scene_num - 1) * 60 / total_scenes
@@ -124,7 +138,9 @@ class QuoteVideoPipeline:
         image_path = TEMP_DIR / f"{scene_prefix}_image.png"
         self.image_generator.generate(
             scene.image_prompt,
-            image_path
+            image_path,
+            width=image_width,
+            height=image_height
         )
 
         # 2. TTS 생성

@@ -126,8 +126,10 @@ class SceneInput(BaseModel):
 class VideoRequest(BaseModel):
     scenes: List[SceneInput]
     clean_temp: Optional[bool] = True
+    image_width: Optional[int] = 1920
+    image_height: Optional[int] = 1080
 
-def process_video_job(job_id: str, scenes: List[Scene], output_name: str, clean_temp: bool):
+def process_video_job(job_id: str, scenes: List[Scene], output_name: str, clean_temp: bool, image_width: int = 1920, image_height: int = 1080):
     """백그라운드에서 영상 생성 처리"""
     import traceback
 
@@ -141,6 +143,7 @@ def process_video_job(job_id: str, scenes: List[Scene], output_name: str, clean_
 
     try:
         print(f"[Job {job_id}] Starting video generation...")
+        print(f"[Job {job_id}] Image resolution: {image_width}x{image_height}")
 
         # 작업 시작
         job_manager.update_job(
@@ -158,7 +161,9 @@ def process_video_job(job_id: str, scenes: List[Scene], output_name: str, clean_
             scenes=scenes,
             output_name=output_name,
             clean_temp=clean_temp,
-            progress_callback=update_progress
+            progress_callback=update_progress,
+            image_width=image_width,
+            image_height=image_height
         )
 
         print(f"[Job {job_id}] Video created successfully: {result_path}")
@@ -225,7 +230,9 @@ async def create_video(request: VideoRequest, background_tasks: BackgroundTasks)
             job_id,
             scenes,
             auto_filename,
-            request.clean_temp
+            request.clean_temp,
+            request.image_width,
+            request.image_height
         )
 
         return {

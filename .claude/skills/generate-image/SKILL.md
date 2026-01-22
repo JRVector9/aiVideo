@@ -25,11 +25,20 @@ from src.quote_video.flux_image_generator import FluxImageGenerator
 
 generator = FluxImageGenerator()
 
-# 이미지 생성
+# 이미지 생성 (기본 해상도: 1920x1080)
 image_path = generator.generate(
     prompt="A wise philosopher contemplating life under a tree",
     output_path="output/scene_001.png",
     seed=-1  # -1이면 랜덤
+)
+
+# 커스텀 해상도로 생성
+image_path = generator.generate(
+    prompt="A wise philosopher contemplating life under a tree",
+    output_path="output/scene_001.png",
+    width=1280,
+    height=720,
+    seed=-1
 )
 
 print(f"Image saved: {image_path}")
@@ -42,7 +51,7 @@ print(f"Image saved: {image_path}")
 | 서버 | comfyui.jrai.space | ComfyUI 서버 URL |
 | 모델 | FLUX Schnell | 고속 이미지 생성 모델 |
 | 로더 | UNETLoader | FLUX 전용 로더 |
-| 해상도 | 1920x1080 | Full HD |
+| 해상도 | 설정 가능 (기본: 1920x1080) | 커스텀 해상도 지원 |
 | Steps | 4 | FLUX Schnell 최적값 (4-8) |
 | CFG Scale | 1.0 | FLUX 권장값 |
 | Sampler | euler | 안정적인 샘플러 |
@@ -56,6 +65,8 @@ print(f"Image saved: {image_path}")
 3. **비동기 처리**: ComfyUI 큐 시스템으로 안정적 생성
 4. **에러 핸들링**: 타임아웃 및 실패 자동 처리
 5. **시드 제어**: 재현 가능한 이미지 생성 지원
+6. **한글 프롬프트 지원**: DeepL API를 통한 한글→영어 자동 번역
+7. **해상도 설정**: 커스텀 해상도 지원 (Full HD, HD, 4K, 세로형, 정사각형 등)
 
 ## Example Prompts
 
@@ -105,7 +116,12 @@ COMFYUI_URL=https://comfyui.jrai.space
 - **평균 생성 시간**: 20초
 - **최소**: 15초 (서버 idle 상태)
 - **최대**: 30초 (서버 busy 상태)
-- **이미지 크기**: 1-2MB (1920x1080 PNG)
+- **이미지 크기**: 해상도에 따라 변동
+  - 1920x1080 (Full HD): 1-2MB
+  - 1280x720 (HD): 0.5-1MB
+  - 3840x2160 (4K): 3-5MB
+  - 1080x1920 (세로형): 1-2MB
+  - 1080x1080 (정사각형): 0.7-1.2MB
 
 ## Troubleshooting
 

@@ -520,6 +520,17 @@
                         <input type="text" id="apiUrl" value="https://aivideo.jrai.space" placeholder="https://aivideo.jrai.space">
                         <div class="hint">배포 서버 또는 로컬 서버 URL (자세한 내용은 사용법 참고)</div>
                     </div>
+                    <div class="form-group">
+                        <label>이미지 해상도</label>
+                        <select id="imageResolution" onchange="autoSave()">
+                            <option value="1920x1080" selected>1920x1080 (Full HD)</option>
+                            <option value="1280x720">1280x720 (HD)</option>
+                            <option value="3840x2160">3840x2160 (4K)</option>
+                            <option value="1080x1920">1080x1920 (세로형)</option>
+                            <option value="1080x1080">1080x1080 (정사각형)</option>
+                        </select>
+                        <div class="hint">영상 해상도에 맞춰 선택하세요</div>
+                    </div>
                 </div>
             </div>
 
@@ -581,12 +592,14 @@
         const STORAGE_KEY = 'aiVideo_scenes';
         const GLOBAL_PROMPT_KEY = 'aiVideo_globalPrompt';
         const PROMPT_HISTORY_KEY = 'aiVideo_promptHistory';
+        const RESOLUTION_KEY = 'aiVideo_imageResolution';
 
         // 초기화
         function initScenes() {
             // LocalStorage에서 복원
             const savedScenes = localStorage.getItem(STORAGE_KEY);
             const savedGlobalPrompt = localStorage.getItem(GLOBAL_PROMPT_KEY);
+            const savedResolution = localStorage.getItem(RESOLUTION_KEY);
 
             if (savedScenes) {
                 scenes = JSON.parse(savedScenes);
@@ -602,6 +615,10 @@
                 document.getElementById('globalImagePrompt').value = globalImagePrompt;
             }
 
+            if (savedResolution) {
+                document.getElementById('imageResolution').value = savedResolution;
+            }
+
             renderScenes();
         }
 
@@ -610,6 +627,10 @@
             // Global prompt 저장
             globalImagePrompt = document.getElementById('globalImagePrompt').value;
             localStorage.setItem(GLOBAL_PROMPT_KEY, globalImagePrompt);
+
+            // 해상도 저장
+            const resolution = document.getElementById('imageResolution').value;
+            localStorage.setItem(RESOLUTION_KEY, resolution);
 
             // Scenes 저장
             const currentScenes = collectScenes();
@@ -844,11 +865,13 @@
             const apiUrl = document.getElementById('apiUrl').value;
             const scenesData = collectScenes();
             const globalPrompt = document.getElementById('globalImagePrompt').value;
+            const resolution = document.getElementById('imageResolution').value;
 
             // 디버그: Scene 순서 확인
             console.log('📹 영상 생성 시작 - Scene 순서:', scenesData.map((s, i) =>
                 `Scene ${i + 1}: ${s.narration.substring(0, 30)}...`
             ));
+            console.log('📐 이미지 해상도:', resolution);
 
             // 유효성 검사
             if (scenesData.some(s => !s.narration || !s.image_prompt)) {
@@ -860,6 +883,9 @@
             generateBtn.disabled = true;
             generateBtn.textContent = '⏳ 생성 중...';
             generateBtn.style.opacity = '0.6';
+
+            // 해상도 파싱
+            const [width, height] = resolution.split('x').map(Number);
 
             // Global prompt를 각 scene의 image_prompt에 추가
             const processedScenes = scenesData.map(scene => ({
@@ -878,7 +904,9 @@
                     },
                     body: JSON.stringify({
                         scenes: processedScenes,
-                        clean_temp: true
+                        clean_temp: true,
+                        image_width: width,
+                        image_height: height
                     })
                 });
 
