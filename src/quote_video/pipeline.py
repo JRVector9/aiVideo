@@ -175,7 +175,9 @@ class QuoteVideoPipeline:
             image_path,
             audio_path,
             scene_video_path,
-            subtitle_path
+            subtitle_path,
+            width=image_width,
+            height=image_height
         )
 
         print(f"[Scene {scene_num}] ✅ Scene completed")

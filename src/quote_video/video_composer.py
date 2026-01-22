@@ -46,7 +46,9 @@ class VideoComposer:
         output_path: Path,
         subtitle_path: Optional[Path] = None,
         fade_in: bool = True,
-        fade_out: bool = True
+        fade_out: bool = True,
+        width: int = VIDEO_WIDTH,
+        height: int = VIDEO_HEIGHT
     ) -> Path:
         """
         단일 씬 합성 (이미지 + 오디오 + 자막)
@@ -58,6 +60,8 @@ class VideoComposer:
             subtitle_path: SRT 자막 파일 경로 (선택)
             fade_in: 페이드인 효과 적용 여부
             fade_out: 페이드아웃 효과 적용 여부
+            width: 영상 가로 해상도 (기본값: config의 VIDEO_WIDTH)
+            height: 영상 세로 해상도 (기본값: config의 VIDEO_HEIGHT)
 
         Returns:
             생성된 영상 파일 경로
@@ -65,6 +69,7 @@ class VideoComposer:
         print(f"[VideoComposer] Composing scene...")
         print(f"[VideoComposer] Image: {image_path}")
         print(f"[VideoComposer] Audio: {audio_path}")
+        print(f"[VideoComposer] Resolution: {width}x{height}")
 
         # 오디오 길이 확인
         duration = self._get_audio_duration(audio_path)
@@ -72,7 +77,7 @@ class VideoComposer:
 
         # FFmpeg 필터 구성
         video_filter = self._build_video_filter(
-            duration, fade_in, fade_out, subtitle_path
+            duration, fade_in, fade_out, subtitle_path, width, height
         )
 
         # FFmpeg 명령 구성
@@ -172,14 +177,16 @@ class VideoComposer:
         duration: float,
         fade_in: bool,
         fade_out: bool,
-        subtitle_path: Optional[Path]
+        subtitle_path: Optional[Path],
+        width: int = VIDEO_WIDTH,
+        height: int = VIDEO_HEIGHT
     ) -> str:
         """비디오 필터 문자열 구성"""
         filters = []
 
         # 리사이즈
-        filters.append(f"scale={VIDEO_WIDTH}:{VIDEO_HEIGHT}:force_original_aspect_ratio=decrease")
-        filters.append(f"pad={VIDEO_WIDTH}:{VIDEO_HEIGHT}:(ow-iw)/2:(oh-ih)/2")
+        filters.append(f"scale={width}:{height}:force_original_aspect_ratio=decrease")
+        filters.append(f"pad={width}:{height}:(ow-iw)/2:(oh-ih)/2")
 
         # 페이드 효과
         if fade_in:
@@ -192,7 +199,7 @@ class VideoComposer:
         # 자막
         if subtitle_path and subtitle_path.exists():
             # ASS 자막으로 변환하여 폰트 직접 지정
-            ass_path = self._convert_srt_to_ass(subtitle_path)
+            ass_path = self._convert_srt_to_ass(subtitle_path, width, height)
             if ass_path:
                 # subtitles 필터 사용 (ASS 파일 지원)
                 # 경로의 특수 문자 이스케이프
@@ -251,7 +258,7 @@ class VideoComposer:
         }
         return color_map.get(color.lower(), "&H00FFFFFF")
 
-    def _convert_srt_to_ass(self, srt_path: Path) -> Optional[Path]:
+    def _convert_srt_to_ass(self, srt_path: Path, width: int = VIDEO_WIDTH, height: int = VIDEO_HEIGHT) -> Optional[Path]:
         """SRT 자막을 ASS 형식으로 변환 (시스템 폰트 사용)"""
         try:
             # SRT 파일 읽기
@@ -293,8 +300,8 @@ class VideoComposer:
 Title: Quote Video Subtitle
 ScriptType: v4.00+
 WrapStyle: 0
-PlayResX: {VIDEO_WIDTH}
-PlayResY: {VIDEO_HEIGHT}
+PlayResX: {width}
+PlayResY: {height}
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
