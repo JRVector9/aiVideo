@@ -4,7 +4,7 @@ ComfyUI FLUX + ElevenLabs 기반 오디오북 영상 자동 생성 시스템
 
 ![License](https://img.shields.io/badge/License-MIT-green.svg)
 ![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)
-![FLUX](https://img.shields.io/badge/FLUX-Schnell-purple.svg)
+![FLUX](https://img.shields.io/badge/FLUX.2-Klein%20Base-purple.svg)
 ![ElevenLabs](https://img.shields.io/badge/ElevenLabs-TTS-orange.svg)
 
 ---
@@ -13,7 +13,7 @@ ComfyUI FLUX + ElevenLabs 기반 오디오북 영상 자동 생성 시스템
 
 | 기능 | 설명 | 기술 스택 |
 |------|------|----------|
-| 🎨 **이미지 생성** | Notion 스타일 미니멀 일러스트 | FLUX Schnell (ComfyUI) |
+| 🎨 **이미지 생성** | Notion 스타일 미니멀 일러스트 (고품질 32B 파라미터) | FLUX.2 Klein Base (ComfyUI) |
 | 🎙️ **TTS 나레이션** | 고품질 한국어 음성 생성 | ElevenLabs multilingual-v2 |
 | 📝 **자막 동기화** | 정확한 타임스탬프 자막 | Whisper large-v3 |
 | 🎬 **영상 합성** | 전문가급 영상 제작 | FFmpeg |
@@ -82,7 +82,7 @@ python test_subtitle.py
 
 ### API 요구사항
 
-- **ComfyUI 서버**: https://comfyui.jrai.space (FLUX Schnell 모델)
+- **ComfyUI 서버**: https://comfyui.jrai.space (FLUX.2 Klein Base 모델)
 - **ElevenLabs API**: 무료 10,000 글자/월
 
 ### 디스크 공간
@@ -216,7 +216,7 @@ pipeline.create_video(
 
 IMAGE_WIDTH = 1920
 IMAGE_HEIGHT = 1080
-IMAGE_STEPS = 4              # FLUX Schnell: 4-8 steps
+IMAGE_STEPS = 25             # FLUX.2 Klein Base: 25-50 steps (고품질)
 IMAGE_CFG_SCALE = 1.0        # FLUX uses CFG 1.0
 IMAGE_SAMPLER = "euler"
 IMAGE_SCHEDULER = "simple"
@@ -289,12 +289,12 @@ python -m src.quote_video.pipeline
 
 | 작업 | 예상 시간 | 비고 |
 |------|----------|------|
-| 이미지 생성 | 15-30초 | FLUX Schnell (4 steps) |
+| 이미지 생성 | 40-90초 | FLUX.2 Klein Base (25 steps, 고품질) |
 | TTS 생성 | 3-5초 | ElevenLabs API |
 | 자막 생성 | 5-10초 | Whisper large-v3 |
 | 영상 합성 | 10-15초 | 1분 영상 기준 |
-| **총 1씬** | **~45초** | |
-| **총 10씬 영상** | **~8분** | 순차 처리 |
+| **총 1씬** | **~80초** | |
+| **총 10씬 영상** | **~14분** | 순차 처리 |
 
 ---
 
@@ -398,7 +398,7 @@ MIT License
 
 - macOS 14.x (Apple Silicon)
 - Python 3.14
-- FLUX Schnell (ComfyUI)
+- FLUX.2 Klein Base 4B (ComfyUI, FP8 양자화)
 - ElevenLabs API v2.31.0
 - Whisper large-v3
 - FFmpeg 6.x

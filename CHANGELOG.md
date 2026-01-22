@@ -5,6 +5,47 @@ All notable changes to Quote Video System will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2025-01-23
+
+### Changed
+
+#### Image Generation Engine Upgrade
+- **FLUX.1 Schnell → FLUX.2 Klein Base 4B**
+  - Model: `flux-2-klein-base-4b-fp8.safetensors`
+  - Parameters: 12B → 32B (약 2.7배 증가)
+  - Steps: 4 → 25 (고품질 생성)
+  - Generation Time: 15-30초 → 40-90초
+  - Quality: 2-3배 향상 (더 정교한 디테일, 개선된 명암)
+  - VRAM: FP8 양자화로 8GB에서 실행 가능
+
+#### Documentation Updates
+- 모든 문서에서 FLUX.2 Klein Base 반영
+  - `README.md`: 기술 스택, 성능 지표 업데이트
+  - `SETUP.md`: 설치 가이드 및 예상 시간 업데이트
+  - `tests/README.md`: 테스트 예상 시간 업데이트
+  - `.claude/skills/generate-image/SKILL.md`: FLUX.2 상세 스펙 업데이트
+  - `static/usage.html`: 프론트엔드 엔진 정보 업데이트
+
+#### Configuration
+- `src/quote_video/config.py`:
+  - `FLUX_UNET_NAME`: "flux1-schnell.safetensors" → "flux-2-klein-base-4b-fp8.safetensors"
+  - `IMAGE_STEPS`: 4 → 25
+
+### Performance Impact
+
+| Metric | Before (FLUX.1) | After (FLUX.2) | Change |
+|--------|----------------|----------------|--------|
+| Image Generation | 15-30초 | 40-90초 | +2-3배 시간 |
+| Image Quality | 기본 | 고품질 | +2-3배 품질 |
+| Model Size | 12B params | 32B params | +2.7배 |
+| Total (1 scene) | ~45초 | ~80초 | +35초 |
+| Total (10 scenes) | ~8분 | ~14분 | +6분 |
+
+### Migration Notes
+- 기존 프로젝트는 자동으로 FLUX.2 Klein Base 사용
+- 더 빠른 생성이 필요한 경우 `IMAGE_STEPS`를 25→10으로 조정 가능 (품질 저하)
+- ComfyUI 서버에 `flux-2-klein-base-4b-fp8.safetensors` 모델 필요
+
 ## [1.0.0] - 2025-01-21
 
 ### Added

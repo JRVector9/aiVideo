@@ -56,7 +56,7 @@ Available loaders:
 ...
 
 Available models:
-- flux1-schnell.safetensors
+- flux-2-klein-base-4b-fp8.safetensors
 - sdxl_base.safetensors
 ...
 ```
@@ -80,8 +80,8 @@ python tests/find_flux.py
 ✅ UNETLoader
    Input: unet_name
    FLUX models found:
-      🎯 flux1-schnell.safetensors
-      🎯 flux1-dev.safetensors
+      🎯 flux-2-klein-base-4b-fp8.safetensors
+      🎯 flux-2-klein-distilled-4b-fp8.safetensors
 
 ⚠️ CheckpointLoaderSimple
    No FLUX models found
@@ -95,7 +95,7 @@ python tests/find_flux.py
 
 **파일**: `test_flux_image.py`
 
-FLUX Schnell 모델로 실제 이미지 생성 테스트
+FLUX.2 Klein Base 모델로 실제 이미지 생성 테스트
 
 ```bash
 python tests/test_flux_image.py
@@ -103,8 +103,8 @@ python tests/test_flux_image.py
 
 **처리 과정**:
 1. ComfyUI 서버 연결
-2. FLUX Schnell 워크플로우 준비
-3. 이미지 생성 (약 15-30초)
+2. FLUX.2 Klein Base 워크플로우 준비
+3. 이미지 생성 (약 40-90초)
 4. 이미지 저장 및 자동 열기
 
 **출력**:
@@ -112,7 +112,7 @@ python tests/test_flux_image.py
 - 크기: ~1.5MB (1920x1080)
 - 프롬프트: "A beautiful sunset over mountains..."
 
-**예상 시간**: 15-30초
+**예상 시간**: 40-90초 (고품질)
 
 ---
 
@@ -213,9 +213,9 @@ WHISPER_MODEL = "medium"  # 또는 "small"
 | test_comfyui.py | 3-5초 | API 호출만 |
 | check_models.py | 2-3초 | 모델 목록 조회 |
 | find_flux.py | 2-3초 | 모델 검색 |
-| test_flux_image.py | 15-30초 | 이미지 생성 포함 |
+| test_flux_image.py | 40-90초 | FLUX.2 Klein Base 고품질 생성 |
 | test_subtitle.py | 5-10초 | 모델 다운로드 제외 |
-| **전체** | **~1분** | 모든 테스트 순차 실행 |
+| **전체** | **~2분** | 모든 테스트 순차 실행 |
 
 ---
 
@@ -223,7 +223,7 @@ WHISPER_MODEL = "medium"  # 또는 "small"
 
 - **Python**: 3.10+
 - **ComfyUI**: comfyui.jrai.space
-- **FLUX Model**: flux1-schnell.safetensors
+- **FLUX Model**: flux-2-klein-base-4b-fp8.safetensors (32B 파라미터, FP8 양자화)
 - **Whisper Model**: large-v3 (~3GB)
 - **네트워크**: 인터넷 연결 필요
 

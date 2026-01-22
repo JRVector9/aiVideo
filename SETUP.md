@@ -160,7 +160,7 @@ python find_flux.py
 ✅ UNETLoader
    Input: unet_name
    FLUX models found:
-      🎯 flux1-schnell.safetensors
+      🎯 flux-2-klein-base-4b-fp8.safetensors
 ```
 
 ### 6.3 FLUX 이미지 생성 테스트
@@ -261,7 +261,7 @@ pipeline.create_video(
 python example.py
 ```
 
-**예상 시간**: 약 45초 ~ 1분
+**예상 시간**: 약 80초 ~ 2분 (FLUX.2 Klein Base 고품질 생성)
 
 **출력**: `output/my_first_video.mp4`
 
@@ -274,8 +274,8 @@ python example.py
 `src/quote_video/config.py`:
 
 ```python
-# FLUX 설정
-IMAGE_STEPS = 4        # 4-8 (높을수록 품질 향상, 시간 증가)
+# FLUX.2 Klein Base 설정
+IMAGE_STEPS = 25       # 25-50 (높을수록 품질 향상, 시간 증가)
 IMAGE_WIDTH = 1920     # 해상도
 IMAGE_HEIGHT = 1080
 ```
