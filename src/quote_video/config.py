@@ -20,8 +20,8 @@ COMFYUI_VIEW_ENDPOINT = f"{COMFYUI_BASE_URL}/view"
 COMFYUI_HISTORY_ENDPOINT = f"{COMFYUI_BASE_URL}/history"
 
 # FLUX 모델 설정 (UNETLoader 방식)
-# FLUX.2 Klein 4B (Distilled) - Fast generation with good quality
-FLUX_UNET_NAME = "flux-2-klein-4b-fp8.safetensors"
+# FLUX.1 Schnell - Fast and stable on MPS (Apple Silicon)
+FLUX_UNET_NAME = "flux1-schnell.safetensors"
 FLUX_CLIP_TYPE = "flux"
 FLUX_WEIGHT_DTYPE = "default"
 

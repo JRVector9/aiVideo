@@ -5,6 +5,24 @@ All notable changes to Quote Video System will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.3] - 2026-01-23
+
+### Fixed
+- **Rollback to FLUX.1 Schnell**: FLUX.2 Klein 모델이 MPS (Apple Silicon) 환경에서 VAE 디코딩 시 `MPSGraph does not support tensor dims larger than INT_MAX` 에러 발생으로 FLUX.1 Schnell로 복귀
+- **Async Processing**: `timeout=None` 설정으로 비동기 처리 유지 (타임아웃 없이 안정적 생성)
+
+### Changed
+- Model: `flux-2-klein-4b.safetensors` → `flux1-schnell.safetensors`
+- CLIP: `CLIPLoader (qwen_3_4b)` → `DualCLIPLoader (t5xxl_fp16 + clip_l)`
+- VAE: `flux2-vae.safetensors` → `ae.safetensors`
+- Image Generation Time: ~30초 목표 → ~90-120초 (MPS 환경, 비동기)
+- Quality: FLUX.1 Schnell 표준 품질 유지
+
+### Technical Notes
+- FLUX.2 Klein은 NVIDIA GPU (CUDA) 환경에서만 안정적으로 작동
+- MPS 백엔드는 FP8 모델 미지원 및 대용량 텐서 제한 있음
+- CPU Fallback (`PYTORCH_ENABLE_MPS_FALLBACK=1`) 시도했으나 VAE INT_MAX 에러 해결 불가
+
 ## [1.2.0] - 2025-01-23
 
 ### Changed
