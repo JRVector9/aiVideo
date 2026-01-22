@@ -543,7 +543,7 @@
                 <div class="button-group">
                     <button class="btn btn-secondary" onclick="addScene()">+ Scene 추가</button>
                     <button class="btn btn-success" onclick="saveScenes()">💾 수동 저장</button>
-                    <button class="btn btn-primary" onclick="generateVideo()">🎬 영상 생성</button>
+                    <button class="btn btn-primary" id="generateBtn" onclick="generateVideo()">🎬 영상 생성</button>
                 </div>
             </div>
 
@@ -830,8 +830,17 @@
         let pollingInterval = null;
         let progressStartTime = null;
 
+        // 영상 생성 버튼 활성화
+        function enableGenerateButton() {
+            const generateBtn = document.getElementById('generateBtn');
+            generateBtn.disabled = false;
+            generateBtn.textContent = '🎬 영상 생성';
+            generateBtn.style.opacity = '1';
+        }
+
         // 영상 생성
         async function generateVideo() {
+            const generateBtn = document.getElementById('generateBtn');
             const apiUrl = document.getElementById('apiUrl').value;
             const scenesData = collectScenes();
             const globalPrompt = document.getElementById('globalImagePrompt').value;
@@ -846,6 +855,11 @@
                 showStatus('모든 Scene의 나레이션과 이미지 프롬프트를 입력해주세요.', 'error');
                 return;
             }
+
+            // 버튼 비활성화
+            generateBtn.disabled = true;
+            generateBtn.textContent = '⏳ 생성 중...';
+            generateBtn.style.opacity = '0.6';
 
             // Global prompt를 각 scene의 image_prompt에 추가
             const processedScenes = scenesData.map(scene => ({
@@ -876,6 +890,7 @@
                     } else {
                         showStatus(`❌ 서버 오류 (${response.status})`, 'error');
                     }
+                    enableGenerateButton();
                     return;
                 }
 
@@ -889,10 +904,12 @@
                     startJobPolling(apiUrl, data.job_id, scenesData.length);
                 } else {
                     showStatus('❌ 예상치 못한 응답 형식', 'error');
+                    enableGenerateButton();
                 }
 
             } catch (error) {
                 showStatus(`❌ 네트워크 오류: ${error.message}`, 'error');
+                enableGenerateButton();
             }
         }
 
@@ -916,6 +933,7 @@
                 const response = await fetch(`${apiUrl}/api/jobs/${jobId}`);
                 if (!response.ok) {
                     stopPolling();
+                    enableGenerateButton();
                     showStatus('❌ 작업 상태를 조회할 수 없습니다.', 'error');
                     return;
                 }
@@ -925,10 +943,12 @@
 
                 if (job.status === 'completed') {
                     stopPolling();
+                    enableGenerateButton();
                     showStatus(`✅ 영상 생성 완료! 파일명: ${job.result.filename}`, 'success');
                     loadVideos();
                 } else if (job.status === 'failed') {
                     stopPolling();
+                    enableGenerateButton();
                     showStatus(`❌ 영상 생성 실패: ${job.error}`, 'error');
                 } else {
                     showJobProgress(job, scenesCount, estimatedMinutes, elapsedSeconds);
