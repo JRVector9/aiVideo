@@ -20,7 +20,8 @@ COMFYUI_VIEW_ENDPOINT = f"{COMFYUI_BASE_URL}/view"
 COMFYUI_HISTORY_ENDPOINT = f"{COMFYUI_BASE_URL}/history"
 
 # FLUX 모델 설정 (UNETLoader 방식)
-FLUX_UNET_NAME = "flux1-schnell.safetensors"
+# FLUX.2 Klein 4B (Base) - Higher quality with more steps
+FLUX_UNET_NAME = "flux-2-klein-base-4b-fp8.safetensors"
 FLUX_CLIP_TYPE = "flux"
 FLUX_WEIGHT_DTYPE = "default"
 
@@ -40,7 +41,7 @@ cluttered, busy, complex background
 
 IMAGE_WIDTH = 1920
 IMAGE_HEIGHT = 1080
-IMAGE_STEPS = 4  # FLUX Schnell: 4-8 steps recommended
+IMAGE_STEPS = 25  # FLUX.2 Klein Base: 25-50 steps recommended
 IMAGE_CFG_SCALE = 1.0  # FLUX uses CFG 1.0
 IMAGE_SAMPLER = "euler"
 IMAGE_SCHEDULER = "simple"
