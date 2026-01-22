@@ -18,6 +18,14 @@ from .config import (
     SUBTITLE_FONT_COLOR,
     SUBTITLE_OUTLINE_COLOR,
     SUBTITLE_OUTLINE_WIDTH,
+    QUOTE_FONT,
+    QUOTE_FONT_SIZE,
+    QUOTE_FONT_COLOR,
+    QUOTE_OUTLINE_COLOR,
+    QUOTE_OUTLINE_WIDTH,
+    QUOTE_SHADOW_OFFSET,
+    AUTHOR_FONT_SIZE,
+    AUTHOR_OUTLINE_WIDTH,
     FONT_DIR,
     TEMP_DIR,
     OUTPUT_DIR
@@ -45,19 +53,23 @@ class VideoComposer:
         audio_path: Path,
         output_path: Path,
         subtitle_path: Optional[Path] = None,
+        quote_text: Optional[str] = None,
+        author: Optional[str] = None,
         fade_in: bool = True,
         fade_out: bool = True,
         width: int = VIDEO_WIDTH,
         height: int = VIDEO_HEIGHT
     ) -> Path:
         """
-        단일 씬 합성 (이미지 + 오디오 + 자막)
+        단일 씬 합성 (이미지 + 오디오 + 자막 + 명언 텍스트)
 
         Args:
             image_path: 배경 이미지 경로
             audio_path: 오디오 파일 경로
             output_path: 출력 영상 경로
             subtitle_path: SRT 자막 파일 경로 (선택)
+            quote_text: 명언 텍스트 (선택) - FFmpeg drawtext로 오버레이
+            author: 명언 저자 (선택) - quote_text와 함께 표시
             fade_in: 페이드인 효과 적용 여부
             fade_out: 페이드아웃 효과 적용 여부
             width: 영상 가로 해상도 (기본값: config의 VIDEO_WIDTH)
@@ -77,7 +89,7 @@ class VideoComposer:
 
         # FFmpeg 필터 구성
         video_filter = self._build_video_filter(
-            duration, fade_in, fade_out, subtitle_path, width, height
+            duration, fade_in, fade_out, subtitle_path, quote_text, author, width, height
         )
 
         # FFmpeg 명령 구성
@@ -178,6 +190,8 @@ class VideoComposer:
         fade_in: bool,
         fade_out: bool,
         subtitle_path: Optional[Path],
+        quote_text: Optional[str],
+        author: Optional[str],
         width: int = VIDEO_WIDTH,
         height: int = VIDEO_HEIGHT
     ) -> str:
@@ -196,7 +210,13 @@ class VideoComposer:
             fade_start = max(0, duration - VIDEO_FADE_DURATION)
             filters.append(f"fade=t=out:st={fade_start}:d={VIDEO_FADE_DURATION}")
 
-        # 자막
+        # 명언 텍스트 오버레이 (drawtext 필터)
+        if quote_text:
+            quote_filter = self._build_quote_text_filter(quote_text, author, width, height)
+            if quote_filter:
+                filters.append(quote_filter)
+
+        # 자막 (Whisper 생성 자막 - 나레이션용)
         if subtitle_path and subtitle_path.exists():
             # ASS 자막으로 변환하여 폰트 직접 지정
             ass_path = self._convert_srt_to_ass(subtitle_path, width, height)
@@ -208,6 +228,71 @@ class VideoComposer:
                 filters.append(subtitle_filter)
 
         return ",".join(filters)
+
+    def _build_quote_text_filter(
+        self,
+        quote_text: str,
+        author: Optional[str],
+        width: int,
+        height: int
+    ) -> str:
+        """명언 텍스트 drawtext 필터 구성
+
+        Args:
+            quote_text: 명언 본문
+            author: 저자 이름 (선택)
+            width: 영상 가로 해상도
+            height: 영상 세로 해상도
+
+        Returns:
+            drawtext 필터 문자열
+        """
+        # 폰트 파일 경로 (시스템 폰트 사용)
+        # FFmpeg는 fontfile 대신 font 파라미터로 시스템 폰트 사용 가능
+
+        # 텍스트 이스케이프 (FFmpeg 특수 문자 처리)
+        escaped_quote = quote_text.replace("'", "'\\\\\\''").replace(":", "\\:")
+
+        # 명언 본문 필터
+        # x=(w-text_w)/2: 가로 중앙
+        # y=(h-text_h)/2-100: 세로 중앙에서 약간 위
+        quote_filter = (
+            f"drawtext="
+            f"text='{escaped_quote}':"
+            f"font={QUOTE_FONT}:"
+            f"fontsize={QUOTE_FONT_SIZE}:"
+            f"fontcolor={QUOTE_FONT_COLOR}:"
+            f"borderw={QUOTE_OUTLINE_WIDTH}:"
+            f"bordercolor={QUOTE_OUTLINE_COLOR}:"
+            f"shadowx={QUOTE_SHADOW_OFFSET}:"
+            f"shadowy={QUOTE_SHADOW_OFFSET}:"
+            f"shadowcolor=black@0.5:"
+            f"x=(w-text_w)/2:"
+            f"y=(h-text_h)/2-100"
+        )
+
+        # 저자 이름 필터 (있는 경우)
+        if author:
+            escaped_author = f"- {author}".replace("'", "'\\\\\\''").replace(":", "\\:")
+
+            author_filter = (
+                f"drawtext="
+                f"text='{escaped_author}':"
+                f"font={QUOTE_FONT}:"
+                f"fontsize={AUTHOR_FONT_SIZE}:"
+                f"fontcolor={QUOTE_FONT_COLOR}:"
+                f"borderw={AUTHOR_OUTLINE_WIDTH}:"
+                f"bordercolor={QUOTE_OUTLINE_COLOR}:"
+                f"shadowx={QUOTE_SHADOW_OFFSET}:"
+                f"shadowy={QUOTE_SHADOW_OFFSET}:"
+                f"shadowcolor=black@0.5:"
+                f"x=(w-text_w)/2:"
+                f"y=(h-text_h)/2+150"
+            )
+
+            return f"{quote_filter},{author_filter}"
+
+        return quote_filter
 
     def _add_bgm(
         self,

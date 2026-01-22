@@ -18,6 +18,8 @@ class Scene:
     """단일 씬 데이터"""
     narration: str  # 한국어 나레이션 텍스트
     image_prompt: str  # 영어 이미지 프롬프트
+    quote_text: Optional[str] = None  # 명언 본문 (화면에 표시될 텍스트)
+    author: Optional[str] = None  # 명언 저자
 
 
 class QuoteVideoPipeline:
@@ -176,6 +178,8 @@ class QuoteVideoPipeline:
             audio_path,
             scene_video_path,
             subtitle_path,
+            quote_text=scene.quote_text,
+            author=scene.author,
             width=image_width,
             height=image_height
         )
@@ -196,11 +200,15 @@ if __name__ == "__main__":
     test_scenes = [
         Scene(
             narration="인생은 고통이다.",
-            image_prompt="A wise philosopher contemplating life, pencil sketch style"
+            image_prompt="A wise philosopher contemplating life, pencil sketch style",
+            quote_text="인생은 고통이다",
+            author="붓다"
         ),
         Scene(
             narration="그러나 우리는 이 고통을 받아들이고 초월해야 한다.",
-            image_prompt="A person meditating under a tree, minimalist illustration"
+            image_prompt="A person meditating under a tree, minimalist illustration",
+            quote_text="고통을 받아들이고\n초월하라",
+            author="붓다"
         ),
     ]
 

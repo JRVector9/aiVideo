@@ -5,6 +5,31 @@ All notable changes to Quote Video System will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-01-23
+
+### Added
+- **FFmpeg Text Overlay**: 명언 텍스트를 FFmpeg drawtext 필터로 직접 렌더링
+  - `VideoComposer.compose_scene()`: `quote_text`, `author` 파라미터 추가
+  - `_build_quote_text_filter()`: drawtext 필터 구성 메서드
+  - 100% 완벽한 텍스트 품질 (AI 생성 이미지 텍스트 문제 해결)
+  - 폰트, 크기, 색상, 위치 완전 제어
+  - 그림자 효과 및 외곽선 지원
+
+### Changed
+- **Scene 데이터클래스**: `quote_text`, `author` 필드 추가
+- **이미지 생성 역할 변경**: 배경 이미지로만 사용 (텍스트는 FFmpeg로 렌더링)
+- **Config 설정 추가**:
+  - `QUOTE_FONT`: 명언 폰트 (NanumMyeongjo-Bold)
+  - `QUOTE_FONT_SIZE`: 72
+  - `AUTHOR_FONT_SIZE`: 52
+  - 외곽선, 그림자 설정
+
+### Technical Details
+- FFmpeg drawtext 필터 사용으로 텍스트 렌더링 품질 최상
+- 명언 본문: 화면 중앙 (약간 위)
+- 저자 이름: 명언 아래 150px
+- 한글/영어 모두 완벽 지원
+
 ## [1.2.3] - 2026-01-23
 
 ### Fixed

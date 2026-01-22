@@ -99,6 +99,17 @@ SUBTITLE_OUTLINE_COLOR = "black"
 SUBTITLE_OUTLINE_WIDTH = 2
 SUBTITLE_POSITION = "bottom"
 
+# Quote Text Overlay Settings (명언 텍스트 오버레이)
+QUOTE_FONT = "NanumMyeongjo-Bold"  # 명조체 (우아한 느낌)
+QUOTE_FONT_SIZE = 72
+QUOTE_FONT_COLOR = "white"
+QUOTE_OUTLINE_COLOR = "black"
+QUOTE_OUTLINE_WIDTH = 3
+QUOTE_SHADOW_OFFSET = 2  # 그림자 오프셋
+
+AUTHOR_FONT_SIZE = 52  # 저자 이름은 명언보다 작게
+AUTHOR_OUTLINE_WIDTH = 2
+
 # ===========================
 # Paths
 # ===========================
