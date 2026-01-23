@@ -20,6 +20,13 @@ class Scene:
     image_prompt: str  # 영어 이미지 프롬프트
     quote_text: Optional[str] = None  # 명언 본문 (화면에 표시될 텍스트)
     author: Optional[str] = None  # 명언 저자
+    # 자막 커스터마이징 옵션 (씬별 설정, 선택사항)
+    subtitle_font: Optional[str] = None
+    subtitle_font_size: Optional[int] = None
+    subtitle_font_color: Optional[str] = None
+    subtitle_outline_color: Optional[str] = None
+    subtitle_outline_width: Optional[int] = None
+    subtitle_position: Optional[str] = None
 
 
 class QuoteVideoPipeline:
@@ -54,7 +61,14 @@ class QuoteVideoPipeline:
         clean_temp: bool = True,
         progress_callback: Optional[callable] = None,
         image_width: int = 1920,
-        image_height: int = 1080
+        image_height: int = 1080,
+        # 전역 자막 설정 (모든 씬에 적용, Scene별 설정이 우선)
+        subtitle_font: Optional[str] = None,
+        subtitle_font_size: Optional[int] = None,
+        subtitle_font_color: Optional[str] = None,
+        subtitle_outline_color: Optional[str] = None,
+        subtitle_outline_width: Optional[int] = None,
+        subtitle_position: Optional[str] = None
     ) -> Path:
         """
         씬 데이터로부터 최종 영상 생성
@@ -91,7 +105,9 @@ class QuoteVideoPipeline:
                 )
 
             scene_video = self._process_scene(
-                scene, i, progress_callback, total_scenes, image_width, image_height
+                scene, i, progress_callback, total_scenes, image_width, image_height,
+                subtitle_font, subtitle_font_size, subtitle_font_color,
+                subtitle_outline_color, subtitle_outline_width, subtitle_position
             )
             scene_videos.append(scene_video)
 
@@ -126,7 +142,13 @@ class QuoteVideoPipeline:
         progress_callback: Optional[callable] = None,
         total_scenes: int = 1,
         image_width: int = 1920,
-        image_height: int = 1080
+        image_height: int = 1080,
+        global_subtitle_font: Optional[str] = None,
+        global_subtitle_font_size: Optional[int] = None,
+        global_subtitle_font_color: Optional[str] = None,
+        global_subtitle_outline_color: Optional[str] = None,
+        global_subtitle_outline_width: Optional[int] = None,
+        global_subtitle_position: Optional[str] = None
     ) -> Path:
         """단일 씬 처리"""
         scene_prefix = f"scene_{scene_num:03d}"
@@ -173,6 +195,15 @@ class QuoteVideoPipeline:
             progress_callback(f"🎬 Scene {scene_num}: 합성 중...", int(base_progress + 40))
 
         scene_video_path = TEMP_DIR / f"{scene_prefix}_video.mp4"
+
+        # 자막 설정: Scene별 설정 우선, 없으면 전역 설정 사용
+        subtitle_font = scene.subtitle_font or global_subtitle_font
+        subtitle_font_size = scene.subtitle_font_size or global_subtitle_font_size
+        subtitle_font_color = scene.subtitle_font_color or global_subtitle_font_color
+        subtitle_outline_color = scene.subtitle_outline_color or global_subtitle_outline_color
+        subtitle_outline_width = scene.subtitle_outline_width or global_subtitle_outline_width
+        subtitle_position = scene.subtitle_position or global_subtitle_position
+
         self.video_composer.compose_scene(
             image_path,
             audio_path,
@@ -181,7 +212,13 @@ class QuoteVideoPipeline:
             quote_text=scene.quote_text,
             author=scene.author,
             width=image_width,
-            height=image_height
+            height=image_height,
+            subtitle_font=subtitle_font,
+            subtitle_font_size=subtitle_font_size,
+            subtitle_font_color=subtitle_font_color,
+            subtitle_outline_color=subtitle_outline_color,
+            subtitle_outline_width=subtitle_outline_width,
+            subtitle_position=subtitle_position
         )
 
         print(f"[Scene {scene_num}] ✅ Scene completed")

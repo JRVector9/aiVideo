@@ -534,6 +534,56 @@
                 </div>
             </div>
 
+            <!-- 자막 설정 섹션 -->
+            <div class="section">
+                <div class="section-title">📝 자막 설정 (전역 설정)</div>
+                <div class="settings-grid">
+                    <div class="form-group">
+                        <label>자막 폰트</label>
+                        <select id="subtitleFont" onchange="autoSave()">
+                            <option value="">기본값 (NanumGothic)</option>
+                            <option value="NanumGothic">NanumGothic</option>
+                            <option value="NanumMyeongjo">NanumMyeongjo</option>
+                            <option value="NanumGothicBold">NanumGothicBold</option>
+                            <option value="NanumMyeongjo-Bold">NanumMyeongjo-Bold</option>
+                            <option value="Arial">Arial</option>
+                            <option value="Helvetica">Helvetica</option>
+                        </select>
+                        <div class="hint">자막에 사용할 폰트</div>
+                    </div>
+                    <div class="form-group">
+                        <label>자막 크기</label>
+                        <input type="number" id="subtitleFontSize" placeholder="48 (기본값)" min="20" max="120" oninput="autoSave()">
+                        <div class="hint">자막 폰트 크기 (20-120)</div>
+                    </div>
+                    <div class="form-group">
+                        <label>자막 위치</label>
+                        <select id="subtitlePosition" onchange="autoSave()">
+                            <option value="">기본값 (bottom)</option>
+                            <option value="bottom">하단 (bottom)</option>
+                            <option value="center">중앙 (center)</option>
+                            <option value="top">상단 (top)</option>
+                        </select>
+                        <div class="hint">화면에서 자막이 표시될 위치</div>
+                    </div>
+                    <div class="form-group">
+                        <label>자막 색상</label>
+                        <input type="text" id="subtitleFontColor" placeholder="white (기본값)" oninput="autoSave()">
+                        <div class="hint">자막 글자 색상 (예: white, black, #FFFFFF)</div>
+                    </div>
+                    <div class="form-group">
+                        <label>외곽선 색상</label>
+                        <input type="text" id="subtitleOutlineColor" placeholder="black (기본값)" oninput="autoSave()">
+                        <div class="hint">자막 외곽선 색상</div>
+                    </div>
+                    <div class="form-group">
+                        <label>외곽선 두께</label>
+                        <input type="number" id="subtitleOutlineWidth" placeholder="2 (기본값)" min="0" max="10" oninput="autoSave()">
+                        <div class="hint">자막 외곽선 두께 (0-10)</div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Scene 설정 섹션 -->
             <div class="section">
                 <div class="section-title">
@@ -600,6 +650,7 @@
             const savedScenes = localStorage.getItem(STORAGE_KEY);
             const savedGlobalPrompt = localStorage.getItem(GLOBAL_PROMPT_KEY);
             const savedResolution = localStorage.getItem(RESOLUTION_KEY);
+            const savedSubtitleSettings = localStorage.getItem('subtitleSettings');
 
             if (savedScenes) {
                 scenes = JSON.parse(savedScenes);
@@ -619,6 +670,17 @@
                 document.getElementById('imageResolution').value = savedResolution;
             }
 
+            // 자막 설정 복원
+            if (savedSubtitleSettings) {
+                const subtitleSettings = JSON.parse(savedSubtitleSettings);
+                if (subtitleSettings.font) document.getElementById('subtitleFont').value = subtitleSettings.font;
+                if (subtitleSettings.fontSize) document.getElementById('subtitleFontSize').value = subtitleSettings.fontSize;
+                if (subtitleSettings.position) document.getElementById('subtitlePosition').value = subtitleSettings.position;
+                if (subtitleSettings.fontColor) document.getElementById('subtitleFontColor').value = subtitleSettings.fontColor;
+                if (subtitleSettings.outlineColor) document.getElementById('subtitleOutlineColor').value = subtitleSettings.outlineColor;
+                if (subtitleSettings.outlineWidth) document.getElementById('subtitleOutlineWidth').value = subtitleSettings.outlineWidth;
+            }
+
             renderScenes();
         }
 
@@ -631,6 +693,17 @@
             // 해상도 저장
             const resolution = document.getElementById('imageResolution').value;
             localStorage.setItem(RESOLUTION_KEY, resolution);
+
+            // 자막 설정 저장
+            const subtitleSettings = {
+                font: document.getElementById('subtitleFont').value,
+                fontSize: document.getElementById('subtitleFontSize').value,
+                position: document.getElementById('subtitlePosition').value,
+                fontColor: document.getElementById('subtitleFontColor').value,
+                outlineColor: document.getElementById('subtitleOutlineColor').value,
+                outlineWidth: document.getElementById('subtitleOutlineWidth').value
+            };
+            localStorage.setItem('subtitleSettings', JSON.stringify(subtitleSettings));
 
             // Scenes 저장
             const currentScenes = collectScenes();
@@ -903,12 +976,22 @@
             // 해상도 파싱
             const [width, height] = resolution.split('x').map(Number);
 
+            // 자막 설정 수집
+            const subtitleFont = document.getElementById('subtitleFont').value || null;
+            const subtitleFontSize = document.getElementById('subtitleFontSize').value ? parseInt(document.getElementById('subtitleFontSize').value) : null;
+            const subtitlePosition = document.getElementById('subtitlePosition').value || null;
+            const subtitleFontColor = document.getElementById('subtitleFontColor').value || null;
+            const subtitleOutlineColor = document.getElementById('subtitleOutlineColor').value || null;
+            const subtitleOutlineWidth = document.getElementById('subtitleOutlineWidth').value ? parseInt(document.getElementById('subtitleOutlineWidth').value) : null;
+
             // Global prompt를 각 scene의 image_prompt에 추가
             const processedScenes = scenesData.map(scene => ({
                 narration: scene.narration,
                 image_prompt: globalPrompt
                     ? `${scene.image_prompt}, ${globalPrompt}`
-                    : scene.image_prompt
+                    : scene.image_prompt,
+                quote_text: scene.quote_text,
+                author: scene.author
             }));
 
             try {
@@ -922,7 +1005,13 @@
                         scenes: processedScenes,
                         clean_temp: true,
                         image_width: width,
-                        image_height: height
+                        image_height: height,
+                        subtitle_font: subtitleFont,
+                        subtitle_font_size: subtitleFontSize,
+                        subtitle_position: subtitlePosition,
+                        subtitle_font_color: subtitleFontColor,
+                        subtitle_outline_color: subtitleOutlineColor,
+                        subtitle_outline_width: subtitleOutlineWidth
                     })
                 });
 

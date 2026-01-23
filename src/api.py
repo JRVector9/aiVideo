@@ -130,8 +130,28 @@ class VideoRequest(BaseModel):
     clean_temp: Optional[bool] = True
     image_width: Optional[int] = 1920
     image_height: Optional[int] = 1080
+    # 전역 자막 설정 (선택사항)
+    subtitle_font: Optional[str] = None
+    subtitle_font_size: Optional[int] = None
+    subtitle_font_color: Optional[str] = None
+    subtitle_outline_color: Optional[str] = None
+    subtitle_outline_width: Optional[int] = None
+    subtitle_position: Optional[str] = None
 
-def process_video_job(job_id: str, scenes: List[Scene], output_name: str, clean_temp: bool, image_width: int = 1920, image_height: int = 1080):
+def process_video_job(
+    job_id: str,
+    scenes: List[Scene],
+    output_name: str,
+    clean_temp: bool,
+    image_width: int = 1920,
+    image_height: int = 1080,
+    subtitle_font: Optional[str] = None,
+    subtitle_font_size: Optional[int] = None,
+    subtitle_font_color: Optional[str] = None,
+    subtitle_outline_color: Optional[str] = None,
+    subtitle_outline_width: Optional[int] = None,
+    subtitle_position: Optional[str] = None
+):
     """백그라운드에서 영상 생성 처리"""
     import traceback
 
@@ -165,7 +185,13 @@ def process_video_job(job_id: str, scenes: List[Scene], output_name: str, clean_
             clean_temp=clean_temp,
             progress_callback=update_progress,
             image_width=image_width,
-            image_height=image_height
+            image_height=image_height,
+            subtitle_font=subtitle_font,
+            subtitle_font_size=subtitle_font_size,
+            subtitle_font_color=subtitle_font_color,
+            subtitle_outline_color=subtitle_outline_color,
+            subtitle_outline_width=subtitle_outline_width,
+            subtitle_position=subtitle_position
         )
 
         print(f"[Job {job_id}] Video created successfully: {result_path}")
@@ -239,7 +265,13 @@ async def create_video(request: VideoRequest, background_tasks: BackgroundTasks)
             auto_filename,
             request.clean_temp,
             request.image_width,
-            request.image_height
+            request.image_height,
+            request.subtitle_font,
+            request.subtitle_font_size,
+            request.subtitle_font_color,
+            request.subtitle_outline_color,
+            request.subtitle_outline_width,
+            request.subtitle_position
         )
 
         return {

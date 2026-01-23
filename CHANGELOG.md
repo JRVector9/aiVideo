@@ -5,6 +5,35 @@ All notable changes to Quote Video System will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-01-24
+
+### Added
+- **자막 커스터마이징 시스템**: 자막 폰트, 크기, 색상, 위치 완전 제어
+  - 웹 UI에 전역 자막 설정 섹션 추가
+  - 자막 폰트 선택 (NanumGothic, NanumMyeongjo, Arial, Helvetica 등)
+  - 자막 크기 조절 (20-120)
+  - 자막 위치 선택 (상단/중앙/하단)
+  - 자막 색상 및 외곽선 색상 커스터마이징
+  - 외곽선 두께 조절 (0-10)
+- **Scene별 자막 설정**: Scene 클래스에 자막 설정 필드 추가 (우선순위: Scene > 전역)
+- **LocalStorage 지원**: 자막 설정이 브라우저에 자동 저장/복원
+
+### Changed
+- `VideoComposer.compose_scene()`: 자막 설정 파라미터 추가
+- `VideoComposer._convert_srt_to_ass()`: 동적 자막 설정 적용
+- `QuoteVideoPipeline.create_video()`: 전역 자막 설정 파라미터 추가
+- `Scene` 데이터클래스: 자막 커스터마이징 필드 추가
+- FastAPI `VideoRequest`: 자막 설정 필드 추가
+- ASS 자막 파일: Alignment 및 MarginV가 위치에 따라 동적 설정
+
+### Technical Details
+- **ASS Subtitle Format**:
+  - Alignment: top=8, center=5, bottom=2
+  - MarginV: top/bottom=50, center=0
+  - 폰트, 색상, 외곽선이 런타임에 적용
+- **자막 위치 제어**: subtitles 필터의 ASS 스타일로 정밀 제어
+- **기본값 유지**: 설정하지 않으면 config.py의 기본값 사용
+
 ## [1.3.1] - 2026-01-24
 
 ### Added

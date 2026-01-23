@@ -58,7 +58,14 @@ class VideoComposer:
         fade_in: bool = True,
         fade_out: bool = True,
         width: int = VIDEO_WIDTH,
-        height: int = VIDEO_HEIGHT
+        height: int = VIDEO_HEIGHT,
+        # 자막 커스터마이징 옵션
+        subtitle_font: Optional[str] = None,
+        subtitle_font_size: Optional[int] = None,
+        subtitle_font_color: Optional[str] = None,
+        subtitle_outline_color: Optional[str] = None,
+        subtitle_outline_width: Optional[int] = None,
+        subtitle_position: Optional[str] = None
     ) -> Path:
         """
         단일 씬 합성 (이미지 + 오디오 + 자막 + 명언 텍스트)
@@ -74,6 +81,12 @@ class VideoComposer:
             fade_out: 페이드아웃 효과 적용 여부
             width: 영상 가로 해상도 (기본값: config의 VIDEO_WIDTH)
             height: 영상 세로 해상도 (기본값: config의 VIDEO_HEIGHT)
+            subtitle_font: 자막 폰트 (선택, 기본값: config.SUBTITLE_FONT)
+            subtitle_font_size: 자막 크기 (선택, 기본값: config.SUBTITLE_FONT_SIZE)
+            subtitle_font_color: 자막 색상 (선택, 기본값: config.SUBTITLE_FONT_COLOR)
+            subtitle_outline_color: 자막 외곽선 색상 (선택, 기본값: config.SUBTITLE_OUTLINE_COLOR)
+            subtitle_outline_width: 자막 외곽선 두께 (선택, 기본값: config.SUBTITLE_OUTLINE_WIDTH)
+            subtitle_position: 자막 위치 - "top"/"center"/"bottom" (선택, 기본값: config.SUBTITLE_POSITION)
 
         Returns:
             생성된 영상 파일 경로
@@ -89,7 +102,9 @@ class VideoComposer:
 
         # FFmpeg 필터 구성
         video_filter = self._build_video_filter(
-            duration, fade_in, fade_out, subtitle_path, quote_text, author, width, height
+            duration, fade_in, fade_out, subtitle_path, quote_text, author, width, height,
+            subtitle_font, subtitle_font_size, subtitle_font_color,
+            subtitle_outline_color, subtitle_outline_width, subtitle_position
         )
 
         # FFmpeg 명령 구성
@@ -193,7 +208,13 @@ class VideoComposer:
         quote_text: Optional[str],
         author: Optional[str],
         width: int = VIDEO_WIDTH,
-        height: int = VIDEO_HEIGHT
+        height: int = VIDEO_HEIGHT,
+        subtitle_font: Optional[str] = None,
+        subtitle_font_size: Optional[int] = None,
+        subtitle_font_color: Optional[str] = None,
+        subtitle_outline_color: Optional[str] = None,
+        subtitle_outline_width: Optional[int] = None,
+        subtitle_position: Optional[str] = None
     ) -> str:
         """비디오 필터 문자열 구성"""
         filters = []
@@ -219,7 +240,11 @@ class VideoComposer:
         # 자막 (Whisper 생성 자막 - 나레이션용)
         if subtitle_path and subtitle_path.exists():
             # ASS 자막으로 변환하여 폰트 직접 지정
-            ass_path = self._convert_srt_to_ass(subtitle_path, width, height)
+            ass_path = self._convert_srt_to_ass(
+                subtitle_path, width, height,
+                subtitle_font, subtitle_font_size, subtitle_font_color,
+                subtitle_outline_color, subtitle_outline_width, subtitle_position
+            )
             if ass_path:
                 # subtitles 필터 사용 (ASS 파일 지원)
                 # 경로의 특수 문자 이스케이프
@@ -343,9 +368,28 @@ class VideoComposer:
         }
         return color_map.get(color.lower(), "&H00FFFFFF")
 
-    def _convert_srt_to_ass(self, srt_path: Path, width: int = VIDEO_WIDTH, height: int = VIDEO_HEIGHT) -> Optional[Path]:
+    def _convert_srt_to_ass(
+        self,
+        srt_path: Path,
+        width: int = VIDEO_WIDTH,
+        height: int = VIDEO_HEIGHT,
+        subtitle_font: Optional[str] = None,
+        subtitle_font_size: Optional[int] = None,
+        subtitle_font_color: Optional[str] = None,
+        subtitle_outline_color: Optional[str] = None,
+        subtitle_outline_width: Optional[int] = None,
+        subtitle_position: Optional[str] = None
+    ) -> Optional[Path]:
         """SRT 자막을 ASS 형식으로 변환 (시스템 폰트 사용)"""
         try:
+            # 기본값 설정 (config 값 사용)
+            fontname = subtitle_font or SUBTITLE_FONT
+            fontsize = subtitle_font_size or SUBTITLE_FONT_SIZE
+            font_color = subtitle_font_color or SUBTITLE_FONT_COLOR
+            outline_color_value = subtitle_outline_color or SUBTITLE_OUTLINE_COLOR
+            outline_width = subtitle_outline_width or SUBTITLE_OUTLINE_WIDTH
+            position = subtitle_position or SUBTITLE_POSITION
+
             # SRT 파일 읽기
             with open(srt_path, 'r', encoding='utf-8') as f:
                 srt_content = f.read()
@@ -373,12 +417,21 @@ class VideoComposer:
             # ASS 파일 생성
             ass_path = srt_path.with_suffix('.ass')
 
-            # 시스템에 설치된 폰트 이름 사용
-            fontname = SUBTITLE_FONT
-
             # ASS 색상 설정
-            primary_color = self._color_to_ass(SUBTITLE_FONT_COLOR)
-            outline_color = self._color_to_ass(SUBTITLE_OUTLINE_COLOR)
+            primary_color = self._color_to_ass(font_color)
+            outline_color_ass = self._color_to_ass(outline_color_value)
+
+            # 자막 위치 설정 (ASS Alignment)
+            # bottom: 2 (중앙 하단), center: 5 (중앙), top: 8 (중앙 상단)
+            if position == "top":
+                alignment = 8
+                margin_v = 50
+            elif position == "center":
+                alignment = 5
+                margin_v = 0
+            else:  # bottom (기본값)
+                alignment = 2
+                margin_v = 50
 
             # ASS 헤더
             ass_content = f"""[Script Info]
@@ -390,7 +443,7 @@ PlayResY: {height}
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Default,{fontname},{SUBTITLE_FONT_SIZE},{primary_color},&H000000FF,{outline_color},&H00000000,0,0,0,0,100,100,0,0,1,{SUBTITLE_OUTLINE_WIDTH},0,2,10,10,50,1
+Style: Default,{fontname},{fontsize},{primary_color},&H000000FF,{outline_color_ass},&H00000000,0,0,0,0,100,100,0,0,1,{outline_width},0,{alignment},10,10,{margin_v},1
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
