@@ -122,6 +122,8 @@ async def health():
 class SceneInput(BaseModel):
     narration: str
     image_prompt: str
+    quote_text: Optional[str] = None  # 명언 텍스트 (화면 표시용)
+    author: Optional[str] = None      # 명언 저자
 
 class VideoRequest(BaseModel):
     scenes: List[SceneInput]
@@ -210,7 +212,12 @@ async def create_video(request: VideoRequest, background_tasks: BackgroundTasks)
     try:
         # Scene 객체로 변환
         scenes = [
-            Scene(narration=s.narration, image_prompt=s.image_prompt)
+            Scene(
+                narration=s.narration,
+                image_prompt=s.image_prompt,
+                quote_text=s.quote_text,
+                author=s.author
+            )
             for s in request.scenes
         ]
 

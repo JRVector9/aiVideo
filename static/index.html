@@ -653,7 +653,7 @@
 
         // Scene 추가
         function addScene() {
-            scenes.push({ narration: '', image_prompt: '' });
+            scenes.push({ narration: '', image_prompt: '', quote_text: '', author: '' });
             renderScenes();
             autoSave();
         }
@@ -770,6 +770,16 @@
                         <textarea id="image-prompt-${index}" placeholder="예: A wise philosopher contemplating life in darkness" oninput="autoSave()">${scene.image_prompt || ''}</textarea>
                         <div class="hint">전체 프롬프트가 자동으로 추가됩니다</div>
                     </div>
+                    <div class="form-group">
+                        <label>💬 명언 텍스트 (화면 표시용, 선택사항)</label>
+                        <textarea id="quote-text-${index}" placeholder="예: 인생은 고통이다" oninput="autoSave()">${scene.quote_text || ''}</textarea>
+                        <div class="hint">화면에 표시될 명언 본문 (줄바꿈 가능: Shift+Enter)</div>
+                    </div>
+                    <div class="form-group">
+                        <label>✍️ 저자 (선택사항)</label>
+                        <input type="text" id="author-${index}" placeholder="예: 붓다" oninput="autoSave()" value="${scene.author || ''}">
+                        <div class="hint">명언 저자 이름</div>
+                    </div>
                 </div>
             `).join('');
         }
@@ -780,7 +790,9 @@
             const sceneCards = document.querySelectorAll('.scene-card');
             return Array.from(sceneCards).map((card, index) => ({
                 narration: document.getElementById(`narration-${index}`).value,
-                image_prompt: document.getElementById(`image-prompt-${index}`).value
+                image_prompt: document.getElementById(`image-prompt-${index}`).value,
+                quote_text: document.getElementById(`quote-text-${index}`).value,
+                author: document.getElementById(`author-${index}`).value
             }));
         }
 
@@ -825,6 +837,10 @@
                         <pre>${scene.narration}</pre>
                         <strong>이미지 프롬프트:</strong>
                         <pre>${scene.image_prompt}</pre>
+                        ${scene.quote_text ? `<strong>💬 명언 텍스트:</strong>
+                        <pre>${scene.quote_text}</pre>` : ''}
+                        ${scene.author ? `<strong>✍️ 저자:</strong>
+                        <pre>${scene.author}</pre>` : ''}
                         ${promptData.globalPrompt ? `<strong>최종 합성 프롬프트:</strong>
                         <pre>${scene.image_prompt}, ${promptData.globalPrompt}</pre>` : ''}
                     </div>

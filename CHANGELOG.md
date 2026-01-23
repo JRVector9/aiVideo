@@ -5,6 +5,24 @@ All notable changes to Quote Video System will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.1] - 2026-01-24
+
+### Added
+- **Web Interface Integration**: 명언 텍스트 오버레이 기능이 웹 UI에 추가됨
+  - 각 Scene에 "명언 텍스트" 입력 필드 추가 (선택사항)
+  - "저자" 입력 필드 추가 (선택사항)
+  - localStorage에 자동 저장
+  - 프롬프트 히스토리에 명언/저자 정보 표시
+- **Backend API Update**: FastAPI 엔드포인트가 quote_text, author 필드 지원
+  - `SceneInput` 모델에 `quote_text`, `author` 필드 추가 (Optional)
+  - Scene 생성 시 자동으로 전달
+- **Example Script**: `example_text_overlay.py` 추가 - Python에서 텍스트 오버레이 사용 예제
+
+### Changed
+- 웹 UI에서 Scene 생성 시 quote_text, author 초기화
+- collectScenes() 함수가 새 필드 수집
+- 프롬프트 히스토리 뷰가 명언/저자 표시 (있는 경우)
+
 ## [1.3.0] - 2026-01-23
 
 ### Added
