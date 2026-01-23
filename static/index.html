@@ -869,58 +869,76 @@
             }));
         }
 
-        // 프롬프트 히스토리 저장
-        function savePromptHistory(filename, scenesData, globalPrompt) {
-            const history = JSON.parse(localStorage.getItem(PROMPT_HISTORY_KEY) || '{}');
-
-            history[filename] = {
-                timestamp: new Date().toISOString(),
-                globalPrompt: globalPrompt,
-                scenes: scenesData,
-                scenesCount: scenesData.length
-            };
-
-            localStorage.setItem(PROMPT_HISTORY_KEY, JSON.stringify(history));
-        }
+        // 프롬프트 히스토리 저장 (더 이상 사용 안 함 - 백엔드에서 자동 저장)
+        // function savePromptHistory(filename, scenesData, globalPrompt) {
+        //     const history = JSON.parse(localStorage.getItem(PROMPT_HISTORY_KEY) || '{}');
+        //     history[filename] = {
+        //         timestamp: new Date().toISOString(),
+        //         globalPrompt: globalPrompt,
+        //         scenes: scenesData,
+        //         scenesCount: scenesData.length
+        //     };
+        //     localStorage.setItem(PROMPT_HISTORY_KEY, JSON.stringify(history));
+        // }
 
         // 프롬프트 히스토리 보기
-        function viewPromptHistory(filename) {
-            const history = JSON.parse(localStorage.getItem(PROMPT_HISTORY_KEY) || '{}');
-            const promptData = history[filename];
+        async function viewPromptHistory(filename) {
+            const apiUrl = document.getElementById('apiUrl').value;
 
-            if (!promptData) {
-                showStatus('해당 영상의 프롬프트 정보가 없습니다.', 'error');
-                return;
-            }
+            try {
+                // 백엔드 API에서 프롬프트 조회
+                const response = await fetch(`${apiUrl}/api/prompts/${filename}`);
 
-            const content = document.getElementById('promptHistoryContent');
-            content.innerHTML = `
-                <div class="prompt-history-item">
-                    <h4>📅 생성 시간</h4>
-                    <pre>${new Date(promptData.timestamp).toLocaleString('ko-KR')}</pre>
-                </div>
-                <div class="prompt-history-item">
-                    <h4>🌐 전체 이미지 프롬프트</h4>
-                    <pre>${promptData.globalPrompt || '(없음)'}</pre>
-                </div>
-                ${promptData.scenes.map((scene, index) => `
+                if (!response.ok) {
+                    showStatus('해당 영상의 프롬프트 정보가 없습니다.', 'error');
+                    return;
+                }
+
+                const promptData = await response.json();
+
+                const content = document.getElementById('promptHistoryContent');
+                content.innerHTML = `
                     <div class="prompt-history-item">
-                        <h4>Scene ${index + 1}</h4>
-                        <strong>나레이션:</strong>
-                        <pre>${scene.narration}</pre>
-                        <strong>이미지 프롬프트:</strong>
-                        <pre>${scene.image_prompt}</pre>
-                        ${scene.quote_text ? `<strong>💬 명언 텍스트:</strong>
-                        <pre>${scene.quote_text}</pre>` : ''}
-                        ${scene.author ? `<strong>✍️ 저자:</strong>
-                        <pre>${scene.author}</pre>` : ''}
-                        ${promptData.globalPrompt ? `<strong>최종 합성 프롬프트:</strong>
-                        <pre>${scene.image_prompt}, ${promptData.globalPrompt}</pre>` : ''}
+                        <h4>📅 생성 시간</h4>
+                        <pre>${promptData.created_at || '정보 없음'}</pre>
                     </div>
-                `).join('')}
-            `;
+                    <div class="prompt-history-item">
+                        <h4>🌐 전체 이미지 프롬프트</h4>
+                        <pre>${promptData.global_prompt || '(없음)'}</pre>
+                    </div>
+                    <div class="prompt-history-item">
+                        <h4>📐 이미지 해상도</h4>
+                        <pre>${promptData.image_width || 1920} x ${promptData.image_height || 1080}</pre>
+                    </div>
+                    ${promptData.subtitle_settings && Object.keys(promptData.subtitle_settings).length > 0 ? `
+                    <div class="prompt-history-item">
+                        <h4>📝 자막 설정</h4>
+                        <pre>${JSON.stringify(promptData.subtitle_settings, null, 2)}</pre>
+                    </div>
+                    ` : ''}
+                    ${promptData.scenes.map((scene, index) => `
+                        <div class="prompt-history-item">
+                            <h4>Scene ${index + 1}</h4>
+                            <strong>나레이션:</strong>
+                            <pre>${scene.narration}</pre>
+                            <strong>이미지 프롬프트:</strong>
+                            <pre>${scene.image_prompt}</pre>
+                            ${scene.quote_text ? `<strong>💬 명언 텍스트:</strong>
+                            <pre>${scene.quote_text}</pre>` : ''}
+                            ${scene.author ? `<strong>✍️ 저자:</strong>
+                            <pre>${scene.author}</pre>` : ''}
+                            ${promptData.global_prompt ? `<strong>최종 합성 프롬프트:</strong>
+                            <pre>${scene.image_prompt}, ${promptData.global_prompt}</pre>` : ''}
+                        </div>
+                    `).join('')}
+                `;
 
-            document.getElementById('promptModal').classList.add('show');
+                document.getElementById('promptModal').classList.add('show');
+
+            } catch (error) {
+                console.error('Failed to fetch prompt history:', error);
+                showStatus('프롬프트 정보를 불러오는데 실패했습니다.', 'error');
+            }
         }
 
         // 모달 닫기
@@ -1003,6 +1021,7 @@
                     },
                     body: JSON.stringify({
                         scenes: processedScenes,
+                        global_prompt: globalPrompt || null,
                         clean_temp: true,
                         image_width: width,
                         image_height: height,
@@ -1030,8 +1049,7 @@
                 const data = await response.json();
 
                 if (data.status === 'accepted' && data.job_id) {
-                    // 프롬프트 히스토리 저장
-                    savePromptHistory(data.filename, scenesData, globalPrompt);
+                    // 프롬프트 히스토리는 백엔드에서 자동 저장됨
 
                     showStatus(`🚀 영상 생성 시작: ${data.filename}`, 'info');
                     startJobPolling(apiUrl, data.job_id, scenesData.length);

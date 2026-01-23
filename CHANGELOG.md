@@ -5,6 +5,40 @@ All notable changes to Quote Video System will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2026-01-24
+
+### Added
+- **백엔드 프롬프트 저장 시스템**: 모든 생성 영상의 프롬프트를 서버에 영구 저장
+  - `PromptManager` 클래스: 프롬프트 저장/조회/삭제 관리
+  - `prompts/` 디렉토리: JSON 형식으로 프롬프트 메타데이터 저장
+  - 영상 생성 완료 시 자동으로 프롬프트 저장
+- **프롬프트 조회 API 엔드포인트**:
+  - `GET /api/prompts`: 저장된 프롬프트 목록 조회
+  - `GET /api/prompts/{filename}`: 특정 영상의 프롬프트 조회
+  - `DELETE /api/prompts/{filename}`: 프롬프트 삭제
+- **프롬프트 메타데이터 구조**:
+  - 파일명, 생성 시간
+  - 전역 이미지 프롬프트 (global_prompt)
+  - 이미지 해상도 (image_width, image_height)
+  - 자막 설정 (subtitle_settings)
+  - Scene 데이터 (narration, image_prompt, quote_text, author)
+
+### Changed
+- 웹 UI `viewPromptHistory()`: 백엔드 API에서 프롬프트 조회
+- `VideoRequest`: `global_prompt` 필드 추가
+- `process_video_job()`: 영상 생성 완료 시 프롬프트 자동 저장
+- localStorage 기반 저장 제거 (백엔드 저장으로 대체)
+
+### Fixed
+- **프롬프트 손실 문제 해결**: 브라우저 캐시 삭제 시에도 프롬프트 유지
+- 안정적인 서버 기반 저장으로 프롬프트 영구 보존
+
+### Technical Details
+- 프롬프트 파일: `prompts/{filename}.json` (확장자 제거된 파일명)
+- JSON 구조: timestamp, created_at, global_prompt, scenes, subtitle_settings, image_width, image_height
+- 자동 디렉토리 생성: `PROJECT_ROOT/prompts`
+- 오류 발생 시에도 영상 생성은 계속 진행 (프롬프트 저장 실패는 warning)
+
 ## [1.4.0] - 2026-01-24
 
 ### Added

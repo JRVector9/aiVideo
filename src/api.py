@@ -17,6 +17,7 @@ import re
 from quote_video.pipeline import QuoteVideoPipeline, Scene
 from quote_video.config import OUTPUT_DIR, PROJECT_ROOT
 from job_manager import JobManager, JobStatus
+from prompt_manager import PromptManager
 
 def generate_video_filename() -> str:
     """
@@ -68,10 +69,11 @@ app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 # 파이프라인 초기화 (서버 시작 시 한 번만)
 pipeline = None
 job_manager = None
+prompt_manager = None
 
 @app.on_event("startup")
 async def startup_event():
-    global pipeline, job_manager
+    global pipeline, job_manager, prompt_manager
     print("[API] Initializing pipeline...")
     pipeline = QuoteVideoPipeline()
 
@@ -79,8 +81,13 @@ async def startup_event():
     jobs_dir = PROJECT_ROOT / "jobs"
     job_manager = JobManager(jobs_dir)
 
+    # 프롬프트 관리자 초기화
+    prompts_dir = PROJECT_ROOT / "prompts"
+    prompt_manager = PromptManager(prompts_dir)
+
     print("[API] Pipeline ready!")
     print(f"[API] Job manager ready! Jobs directory: {jobs_dir}")
+    print(f"[API] Prompt manager ready! Prompts directory: {prompts_dir}")
 
 @app.get("/", response_class=HTMLResponse)
 async def root():
@@ -130,6 +137,8 @@ class VideoRequest(BaseModel):
     clean_temp: Optional[bool] = True
     image_width: Optional[int] = 1920
     image_height: Optional[int] = 1080
+    # 전역 이미지 프롬프트 (선택사항)
+    global_prompt: Optional[str] = None
     # 전역 자막 설정 (선택사항)
     subtitle_font: Optional[str] = None
     subtitle_font_size: Optional[int] = None
@@ -150,7 +159,10 @@ def process_video_job(
     subtitle_font_color: Optional[str] = None,
     subtitle_outline_color: Optional[str] = None,
     subtitle_outline_width: Optional[int] = None,
-    subtitle_position: Optional[str] = None
+    subtitle_position: Optional[str] = None,
+    # 프롬프트 저장용 원본 데이터
+    original_scenes: Optional[List[Dict]] = None,
+    global_prompt: Optional[str] = None
 ):
     """백그라운드에서 영상 생성 처리"""
     import traceback
@@ -196,6 +208,34 @@ def process_video_job(
 
         print(f"[Job {job_id}] Video created successfully: {result_path}")
 
+        # 프롬프트 히스토리 저장
+        try:
+            subtitle_settings = {}
+            if subtitle_font:
+                subtitle_settings["font"] = subtitle_font
+            if subtitle_font_size:
+                subtitle_settings["font_size"] = subtitle_font_size
+            if subtitle_font_color:
+                subtitle_settings["font_color"] = subtitle_font_color
+            if subtitle_outline_color:
+                subtitle_settings["outline_color"] = subtitle_outline_color
+            if subtitle_outline_width:
+                subtitle_settings["outline_width"] = subtitle_outline_width
+            if subtitle_position:
+                subtitle_settings["position"] = subtitle_position
+
+            prompt_manager.save_prompt(
+                filename=result_path.name,
+                scenes=original_scenes or [],
+                global_prompt=global_prompt,
+                subtitle_settings=subtitle_settings,
+                image_width=image_width,
+                image_height=image_height
+            )
+            print(f"[Job {job_id}] Prompt history saved")
+        except Exception as e:
+            print(f"[Job {job_id}] Warning: Failed to save prompt history: {e}")
+
         # 작업 완료
         job_manager.update_job(
             job_id,
@@ -236,7 +276,18 @@ async def create_video(request: VideoRequest, background_tasks: BackgroundTasks)
         raise HTTPException(status_code=503, detail="Pipeline not initialized")
 
     try:
-        # Scene 객체로 변환
+        # 원본 scene 데이터를 dict로 저장 (프롬프트 히스토리용)
+        original_scenes = [
+            {
+                "narration": s.narration,
+                "image_prompt": s.image_prompt,
+                "quote_text": s.quote_text,
+                "author": s.author
+            }
+            for s in request.scenes
+        ]
+
+        # Scene 객체로 변환 (파이프라인용)
         scenes = [
             Scene(
                 narration=s.narration,
@@ -271,7 +322,9 @@ async def create_video(request: VideoRequest, background_tasks: BackgroundTasks)
             request.subtitle_font_color,
             request.subtitle_outline_color,
             request.subtitle_outline_width,
-            request.subtitle_position
+            request.subtitle_position,
+            original_scenes,  # 프롬프트 저장용
+            request.global_prompt  # 전역 프롬프트
         )
 
         return {
@@ -337,6 +390,31 @@ async def download_video(filename: str):
         media_type="video/mp4",
         filename=filename
     )
+
+@app.get("/api/prompts")
+async def list_prompts(limit: int = 50):
+    """저장된 프롬프트 히스토리 목록"""
+    prompts = prompt_manager.list_prompts(limit=limit)
+    return {
+        "count": len(prompts),
+        "prompts": prompts
+    }
+
+@app.get("/api/prompts/{filename}")
+async def get_prompt(filename: str):
+    """특정 영상의 프롬프트 히스토리 조회"""
+    prompt = prompt_manager.get_prompt(filename)
+    if not prompt:
+        raise HTTPException(status_code=404, detail="Prompt history not found")
+    return prompt
+
+@app.delete("/api/prompts/{filename}")
+async def delete_prompt(filename: str):
+    """프롬프트 히스토리 삭제"""
+    success = prompt_manager.delete_prompt(filename)
+    if not success:
+        raise HTTPException(status_code=404, detail="Prompt history not found")
+    return {"message": "Prompt history deleted successfully"}
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
