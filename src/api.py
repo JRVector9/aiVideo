@@ -2,16 +2,18 @@
 FastAPI Server for Quote Video Generation
 """
 
-from fastapi import FastAPI, HTTPException, BackgroundTasks
+from fastapi import FastAPI, HTTPException, BackgroundTasks, Request
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
+from sse_starlette.sse import EventSourceResponse
 from pydantic import BaseModel
 from typing import List, Optional, Dict
 from pathlib import Path
 from datetime import datetime
 import uvicorn
 import asyncio
+import json
 import re
 
 from quote_video.pipeline import QuoteVideoPipeline, Scene
@@ -340,11 +342,80 @@ async def create_video(request: VideoRequest, background_tasks: BackgroundTasks)
 
 @app.get("/api/jobs/{job_id}")
 async def get_job_status(job_id: str):
-    """작업 상태 조회"""
+    """작업 상태 조회 (Polling용)"""
     job = job_manager.get_job(job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
     return job
+
+@app.get("/api/jobs/{job_id}/stream")
+async def stream_job_progress(job_id: str, request: Request):
+    """
+    작업 진행 상태를 실시간으로 스트리밍 (SSE)
+
+    EventSource로 연결하면 작업 진행률을 실시간으로 받을 수 있습니다.
+    """
+    # 작업 존재 확인
+    job = job_manager.get_job(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+
+    async def event_generator():
+        """SSE 이벤트 생성기"""
+        last_progress = -1
+        last_status = None
+
+        while True:
+            # 클라이언트 연결 확인
+            if await request.is_disconnected():
+                print(f"[SSE] Client disconnected from job {job_id}")
+                break
+
+            # 작업 상태 조회
+            job = job_manager.get_job(job_id)
+            if not job:
+                yield {
+                    "event": "error",
+                    "data": json.dumps({"error": "Job not found"})
+                }
+                break
+
+            # 진행률 또는 상태 변경 시에만 전송 (중복 방지)
+            if job["progress"] != last_progress or job["status"] != last_status:
+                yield {
+                    "event": "progress",
+                    "data": json.dumps({
+                        "job_id": job_id,
+                        "status": job["status"],
+                        "progress": job["progress"],
+                        "current_stage": job["current_stage"],
+                        "scenes_count": job["scenes_count"]
+                    })
+                }
+
+                last_progress = job["progress"]
+                last_status = job["status"]
+
+                print(f"[SSE] Sent progress update for job {job_id}: {job['progress']}% - {job['current_stage']}")
+
+            # 완료 또는 실패 시 종료
+            if job["status"] in ["completed", "failed"]:
+                yield {
+                    "event": job["status"],
+                    "data": json.dumps({
+                        "job_id": job_id,
+                        "status": job["status"],
+                        "result": job.get("result"),
+                        "error": job.get("error")
+                    })
+                }
+                print(f"[SSE] Job {job_id} finished with status: {job['status']}")
+                break
+
+            # 1초마다 확인 (Polling보다 훨씬 효율적)
+            await asyncio.sleep(1)
+
+    return EventSourceResponse(event_generator())
 
 @app.get("/api/jobs")
 async def list_jobs(limit: int = 20):

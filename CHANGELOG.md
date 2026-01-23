@@ -5,6 +5,35 @@ All notable changes to Quote Video System will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0] - 2026-01-24
+
+### Changed
+- **실시간 진행 상태 모니터링**: Polling에서 SSE (Server-Sent Events)로 전환
+  - 백엔드: `GET /api/jobs/{job_id}/stream` SSE 엔드포인트 추가
+  - 프론트엔드: EventSource API로 실시간 스트리밍
+  - 진행률 업데이트 지연 제거 (5초 → 즉시)
+  - 서버 부하 감소 (반복 요청 → 단일 연결)
+  - 자동 재연결 지원
+
+### Technical Details
+- **SSE 이벤트 타입**:
+  - `progress`: 진행 상태 업데이트 (progress, current_stage, status)
+  - `completed`: 작업 완료 (result, filename)
+  - `failed`: 작업 실패 (error)
+  - `error`: 시스템 오류
+- **연결 관리**:
+  - 1초마다 상태 확인 (변경 시에만 전송)
+  - 완료/실패 시 자동 연결 종료
+  - 클라이언트 연결 해제 감지
+  - Fallback: 연결 오류 시 최종 상태 확인
+- **의존성 추가**: `sse-starlette>=1.6.5`
+
+### Benefits
+- 실시간 진행 상태 (Polling 대비 최대 5초 빠른 업데이트)
+- 서버 부하 감소 (예: 10명 사용자, 2분 작업 시 240회 → 2회 요청)
+- 네트워크 효율성 향상 (HTTP 단일 연결 유지)
+- 사용자 경험 개선 (즉각적인 피드백)
+
 ## [1.5.0] - 2026-01-24
 
 ### Added

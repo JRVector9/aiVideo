@@ -955,7 +955,7 @@
         }
 
         // 진행 상태 추적 변수
-        let pollingInterval = null;
+        let eventSource = null;  // SSE 연결
         let progressStartTime = null;
 
         // 영상 생성 버튼 활성화
@@ -1052,7 +1052,7 @@
                     // 프롬프트 히스토리는 백엔드에서 자동 저장됨
 
                     showStatus(`🚀 영상 생성 시작: ${data.filename}`, 'info');
-                    startJobPolling(apiUrl, data.job_id, scenesData.length);
+                    startJobStreaming(apiUrl, data.job_id, scenesData.length);
                 } else {
                     showStatus('❌ 예상치 못한 응답 형식', 'error');
                     enableGenerateButton();
@@ -1064,57 +1064,115 @@
             }
         }
 
-        // 작업 상태 폴링
-        function startJobPolling(apiUrl, jobId, scenesCount) {
+        // SSE로 작업 상태 스트리밍
+        function startJobStreaming(apiUrl, jobId, scenesCount) {
             progressStartTime = Date.now();
             const estimatedMinutes = Math.ceil(scenesCount * 45 / 60);
 
-            showStatus('🚀 작업이 시작되었습니다. 진행 상태를 확인하고 있습니다...', 'info');
+            showStatus('🚀 작업이 시작되었습니다. 실시간으로 진행 상태를 확인하고 있습니다...', 'info');
 
-            pollJobStatus(apiUrl, jobId, scenesCount, estimatedMinutes);
+            // EventSource 연결 생성
+            const streamUrl = `${apiUrl}/api/jobs/${jobId}/stream`;
+            eventSource = new EventSource(streamUrl);
 
-            pollingInterval = setInterval(() => {
-                pollJobStatus(apiUrl, jobId, scenesCount, estimatedMinutes);
-            }, 5000);
-        }
+            console.log(`[SSE] Connecting to ${streamUrl}`);
 
-        // 작업 상태 조회
-        async function pollJobStatus(apiUrl, jobId, scenesCount, estimatedMinutes) {
-            try {
-                const response = await fetch(`${apiUrl}/api/jobs/${jobId}`);
-                if (!response.ok) {
-                    stopPolling();
-                    enableGenerateButton();
-                    showStatus('❌ 작업 상태를 조회할 수 없습니다.', 'error');
-                    return;
-                }
+            // 진행 상태 업데이트 이벤트
+            eventSource.addEventListener('progress', (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    const elapsedSeconds = Math.floor((Date.now() - progressStartTime) / 1000);
 
-                const job = await response.json();
-                const elapsedSeconds = Math.floor((Date.now() - progressStartTime) / 1000);
+                    // showJobProgress에 전달할 job 객체 구성
+                    const job = {
+                        progress: data.progress,
+                        current_stage: data.current_stage,
+                        status: data.status
+                    };
 
-                if (job.status === 'completed') {
-                    stopPolling();
-                    enableGenerateButton();
-                    showStatus(`✅ 영상 생성 완료! 파일명: ${job.result.filename}`, 'success');
-                    loadVideos();
-                } else if (job.status === 'failed') {
-                    stopPolling();
-                    enableGenerateButton();
-                    showStatus(`❌ 영상 생성 실패: ${job.error}`, 'error');
-                } else {
                     showJobProgress(job, scenesCount, estimatedMinutes, elapsedSeconds);
+                    console.log(`[SSE] Progress: ${data.progress}% - ${data.current_stage}`);
+                } catch (error) {
+                    console.error('[SSE] Error parsing progress event:', error);
                 }
+            });
 
-            } catch (error) {
-                console.error('Polling error:', error);
-            }
+            // 완료 이벤트
+            eventSource.addEventListener('completed', (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    stopStreaming();
+                    enableGenerateButton();
+                    showStatus(`✅ 영상 생성 완료! 파일명: ${data.result.filename}`, 'success');
+                    loadVideos();
+                    console.log('[SSE] Job completed successfully');
+                } catch (error) {
+                    console.error('[SSE] Error parsing completed event:', error);
+                }
+            });
+
+            // 실패 이벤트
+            eventSource.addEventListener('failed', (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    stopStreaming();
+                    enableGenerateButton();
+                    showStatus(`❌ 영상 생성 실패: ${data.error}`, 'error');
+                    console.error('[SSE] Job failed:', data.error);
+                } catch (error) {
+                    console.error('[SSE] Error parsing failed event:', error);
+                }
+            });
+
+            // 에러 이벤트
+            eventSource.addEventListener('error', (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    stopStreaming();
+                    enableGenerateButton();
+                    showStatus(`❌ 오류: ${data.error}`, 'error');
+                    console.error('[SSE] Error event:', data.error);
+                } catch (error) {
+                    console.error('[SSE] Error event occurred:', error);
+                }
+            });
+
+            // 연결 에러 처리
+            eventSource.onerror = (error) => {
+                console.error('[SSE] Connection error:', error);
+
+                // 연결이 닫혔는지 확인
+                if (eventSource.readyState === EventSource.CLOSED) {
+                    console.log('[SSE] Connection closed');
+                    stopStreaming();
+                    // 작업 상태 최종 확인 (fallback)
+                    fetch(`${apiUrl}/api/jobs/${jobId}`)
+                        .then(res => res.json())
+                        .then(job => {
+                            if (job.status === 'completed') {
+                                enableGenerateButton();
+                                showStatus(`✅ 영상 생성 완료! 파일명: ${job.result.filename}`, 'success');
+                                loadVideos();
+                            } else if (job.status === 'failed') {
+                                enableGenerateButton();
+                                showStatus(`❌ 영상 생성 실패: ${job.error}`, 'error');
+                            }
+                        })
+                        .catch(err => {
+                            console.error('[SSE] Fallback status check failed:', err);
+                            enableGenerateButton();
+                            showStatus('⚠️ 연결이 끊어졌습니다. 영상 목록을 확인해주세요.', 'warning');
+                        });
+                }
+            };
         }
 
-        // 폴링 중지
-        function stopPolling() {
-            if (pollingInterval) {
-                clearInterval(pollingInterval);
-                pollingInterval = null;
+        // SSE 스트리밍 중지
+        function stopStreaming() {
+            if (eventSource) {
+                eventSource.close();
+                eventSource = null;
+                console.log('[SSE] Connection closed');
             }
         }
 
