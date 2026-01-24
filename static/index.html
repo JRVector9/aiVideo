@@ -482,91 +482,6 @@
             word-wrap: break-word;
         }
 
-        /* 프리셋 관리 스타일 */
-        .preset-section {
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
-            border: 2px solid #dee2e6;
-        }
-
-        .preset-controls {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-            align-items: center;
-        }
-
-        .preset-controls select {
-            flex: 1;
-            min-width: 200px;
-            padding: 10px 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 14px;
-            background: white;
-        }
-
-        .preset-controls select:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
-        .preset-btn {
-            padding: 10px 16px;
-            border: none;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .preset-btn-load {
-            background: #28a745;
-            color: white;
-        }
-
-        .preset-btn-load:hover {
-            background: #218838;
-            transform: translateY(-1px);
-        }
-
-        .preset-btn-save {
-            background: #007bff;
-            color: white;
-        }
-
-        .preset-btn-save:hover {
-            background: #0069d9;
-            transform: translateY(-1px);
-        }
-
-        .preset-btn-delete {
-            background: #dc3545;
-            color: white;
-        }
-
-        .preset-btn-delete:hover {
-            background: #c82333;
-            transform: translateY(-1px);
-        }
-
-        .preset-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none !important;
-        }
-
-        .preset-info {
-            font-size: 12px;
-            color: #6c757d;
-            margin-top: 10px;
-        }
 
         @media (max-width: 768px) {
             .header {
@@ -593,54 +508,16 @@
     <div class="container">
         <div class="header">
             <h1>🎬 AI Video Generator</h1>
-            <a href="/static/usage.html" class="btn-usage">📚 사용법</a>
+            <div style="display: flex; gap: 12px;">
+                <a href="/static/admin.html" class="btn-usage">⚙️ Admin</a>
+                <a href="/static/usage.html" class="btn-usage">📚 사용법</a>
+            </div>
         </div>
 
         <div class="content">
-            <!-- API 설정 섹션 -->
-            <div class="section">
-                <div class="section-title">⚙️ API 설정</div>
-                <div class="settings-grid">
-                    <div class="form-group">
-                        <label>API Base URL</label>
-                        <input type="text" id="apiUrl" value="https://aivideo.jrai.space" placeholder="https://aivideo.jrai.space">
-                        <div class="hint">배포 서버 또는 로컬 서버 URL (자세한 내용은 사용법 참고)</div>
-                    </div>
-                    <div class="form-group">
-                        <label>이미지 해상도</label>
-                        <select id="imageResolution" onchange="autoSave()">
-                            <option value="1920x1080" selected>1920x1080 (Full HD)</option>
-                            <option value="1280x720">1280x720 (HD)</option>
-                            <option value="3840x2160">3840x2160 (4K)</option>
-                            <option value="1080x1920">1080x1920 (세로형)</option>
-                            <option value="1080x1080">1080x1080 (정사각형)</option>
-                        </select>
-                        <div class="hint">영상 해상도에 맞춰 선택하세요</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 프리셋 관리 섹션 -->
-            <div class="section preset-section">
-                <div class="section-title">💾 프리셋 관리</div>
-                <div class="preset-controls">
-                    <select id="presetSelect">
-                        <option value="">-- 프리셋 선택 --</option>
-                    </select>
-                    <button type="button" class="preset-btn preset-btn-load" onclick="loadPreset()" id="btnLoadPreset" disabled>
-                        📥 불러오기
-                    </button>
-                    <button type="button" class="preset-btn preset-btn-save" onclick="savePresetDialog()">
-                        💾 현재 설정 저장
-                    </button>
-                    <button type="button" class="preset-btn preset-btn-delete" onclick="deletePreset()" id="btnDeletePreset" disabled>
-                        🗑️ 삭제
-                    </button>
-                </div>
-                <div class="preset-info" id="presetInfo">
-                    프리셋을 저장하면 폰트, 자막, 해상도 등의 설정을 나중에 다시 사용할 수 있습니다.
-                </div>
-            </div>
+            <!-- Hidden inputs for settings managed in admin page -->
+            <input type="hidden" id="apiUrl" value="https://aivideo.jrai.space">
+            <input type="hidden" id="imageResolution" value="1920x1080">
 
             <!-- 자막 설정 섹션 -->
             <div class="section">
@@ -1391,206 +1268,6 @@
             }
         }
 
-        // ===========================
-        // 프리셋 관리 함수들
-        // ===========================
-
-        // 프리셋 목록 로드
-        async function loadPresets() {
-            const apiUrl = document.getElementById('apiUrl').value;
-            const presetSelect = document.getElementById('presetSelect');
-
-            try {
-                const response = await fetch(`${apiUrl}/api/config/presets`);
-                const data = await response.json();
-
-                // 기존 옵션 제거 (첫 번째 옵션 제외)
-                while (presetSelect.options.length > 1) {
-                    presetSelect.remove(1);
-                }
-
-                // 프리셋 옵션 추가
-                data.presets.forEach(preset => {
-                    const option = document.createElement('option');
-                    option.value = preset.filename;
-                    option.textContent = preset.name + (preset.description ? ` - ${preset.description}` : '');
-                    presetSelect.appendChild(option);
-                });
-
-                console.log('[Presets] Loaded presets:', data.presets.length);
-            } catch (error) {
-                console.error('[Presets] Failed to load presets:', error);
-            }
-        }
-
-        // 프리셋 선택 시 버튼 활성화
-        document.addEventListener('DOMContentLoaded', function() {
-            const presetSelect = document.getElementById('presetSelect');
-            if (presetSelect) {
-                presetSelect.addEventListener('change', function() {
-                    const hasSelection = this.value !== '';
-                    document.getElementById('btnLoadPreset').disabled = !hasSelection;
-                    document.getElementById('btnDeletePreset').disabled = !hasSelection;
-                });
-            }
-        });
-
-        // 현재 설정 수집
-        function collectCurrentConfig() {
-            const resolution = document.getElementById('imageResolution').value.split('x');
-            return {
-                image_width: parseInt(resolution[0]),
-                image_height: parseInt(resolution[1]),
-                quote_font: document.getElementById('quoteFont').value || null,
-                author_font: document.getElementById('authorFont').value || null,
-                subtitle_font: document.getElementById('subtitleFontNew').value || null,
-                subtitle_font_size: parseInt(document.getElementById('subtitleFontSize').value) || 48,
-                subtitle_font_color: document.getElementById('subtitleFontColor').value || '#FFFFFF',
-                subtitle_outline_color: document.getElementById('subtitleOutlineColor').value || '#000000',
-                subtitle_outline_width: parseInt(document.getElementById('subtitleOutlineWidth').value) || 2,
-                subtitle_position: document.getElementById('subtitlePosition').value || 'bottom',
-                global_prompt: document.getElementById('globalImagePrompt').value || null
-            };
-        }
-
-        // 설정 적용
-        function applyConfig(config) {
-            // 이미지 해상도
-            const resolutionValue = `${config.image_width}x${config.image_height}`;
-            const resolutionSelect = document.getElementById('imageResolution');
-            if (Array.from(resolutionSelect.options).some(opt => opt.value === resolutionValue)) {
-                resolutionSelect.value = resolutionValue;
-            }
-
-            // 폰트 설정
-            if (config.quote_font) document.getElementById('quoteFont').value = config.quote_font;
-            if (config.author_font) document.getElementById('authorFont').value = config.author_font;
-            if (config.subtitle_font) document.getElementById('subtitleFontNew').value = config.subtitle_font;
-
-            // 자막 설정
-            if (config.subtitle_font_size) document.getElementById('subtitleFontSize').value = config.subtitle_font_size;
-            if (config.subtitle_font_color) document.getElementById('subtitleFontColor').value = config.subtitle_font_color;
-            if (config.subtitle_outline_color) document.getElementById('subtitleOutlineColor').value = config.subtitle_outline_color;
-            if (config.subtitle_outline_width !== undefined) document.getElementById('subtitleOutlineWidth').value = config.subtitle_outline_width;
-            if (config.subtitle_position) document.getElementById('subtitlePosition').value = config.subtitle_position;
-
-            // 전역 프롬프트
-            if (config.global_prompt) document.getElementById('globalImagePrompt').value = config.global_prompt;
-
-            // 자동 저장
-            autoSave();
-        }
-
-        // 프리셋 불러오기
-        async function loadPreset() {
-            const apiUrl = document.getElementById('apiUrl').value;
-            const presetName = document.getElementById('presetSelect').value;
-
-            if (!presetName) {
-                alert('불러올 프리셋을 선택해주세요.');
-                return;
-            }
-
-            try {
-                const response = await fetch(`${apiUrl}/api/config/presets/${presetName}`);
-                const data = await response.json();
-
-                if (data.success) {
-                    applyConfig(data.preset.config);
-                    showPresetInfo(`✅ "${data.preset.metadata.name}" 프리셋을 불러왔습니다.`);
-                    console.log('[Presets] Loaded preset:', data.preset);
-                } else {
-                    alert(`프리셋 불러오기 실패: ${data.error}`);
-                }
-            } catch (error) {
-                console.error('[Presets] Failed to load preset:', error);
-                alert('프리셋을 불러올 수 없습니다.');
-            }
-        }
-
-        // 프리셋 저장 다이얼로그
-        function savePresetDialog() {
-            const name = prompt('프리셋 이름을 입력하세요:');
-            if (!name || name.trim() === '') {
-                return;
-            }
-
-            const description = prompt('프리셋 설명 (선택사항):') || '';
-            savePreset(name.trim(), description.trim());
-        }
-
-        // 프리셋 저장
-        async function savePreset(name, description) {
-            const apiUrl = document.getElementById('apiUrl').value;
-            const config = collectCurrentConfig();
-
-            try {
-                const response = await fetch(`${apiUrl}/api/config/presets/${encodeURIComponent(name)}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ config, description })
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    showPresetInfo(`✅ "${name}" 프리셋이 저장되었습니다.`);
-                    loadPresets(); // 목록 새로고침
-                    console.log('[Presets] Saved preset:', data.preset);
-                } else {
-                    alert(`프리셋 저장 실패: ${data.error || data.detail}`);
-                }
-            } catch (error) {
-                console.error('[Presets] Failed to save preset:', error);
-                alert('프리셋을 저장할 수 없습니다.');
-            }
-        }
-
-        // 프리셋 삭제
-        async function deletePreset() {
-            const apiUrl = document.getElementById('apiUrl').value;
-            const presetName = document.getElementById('presetSelect').value;
-
-            if (!presetName) {
-                alert('삭제할 프리셋을 선택해주세요.');
-                return;
-            }
-
-            if (!confirm(`정말 "${presetName}" 프리셋을 삭제하시겠습니까?`)) {
-                return;
-            }
-
-            try {
-                const response = await fetch(`${apiUrl}/api/config/presets/${presetName}`, {
-                    method: 'DELETE'
-                });
-
-                if (response.ok) {
-                    showPresetInfo(`🗑️ 프리셋이 삭제되었습니다.`);
-                    loadPresets(); // 목록 새로고침
-                    document.getElementById('presetSelect').value = '';
-                    document.getElementById('btnLoadPreset').disabled = true;
-                    document.getElementById('btnDeletePreset').disabled = true;
-                } else {
-                    const data = await response.json();
-                    alert(`프리셋 삭제 실패: ${data.detail}`);
-                }
-            } catch (error) {
-                console.error('[Presets] Failed to delete preset:', error);
-                alert('프리셋을 삭제할 수 없습니다.');
-            }
-        }
-
-        // 프리셋 정보 표시
-        function showPresetInfo(message) {
-            const infoEl = document.getElementById('presetInfo');
-            infoEl.textContent = message;
-            infoEl.style.color = '#28a745';
-            setTimeout(() => {
-                infoEl.textContent = '프리셋을 저장하면 폰트, 자막, 해상도 등의 설정을 나중에 다시 사용할 수 있습니다.';
-                infoEl.style.color = '#6c757d';
-            }, 3000);
-        }
 
         // 영상 목록 로드
         async function loadVideos() {
@@ -1655,7 +1332,6 @@
         document.addEventListener('DOMContentLoaded', () => {
             initScenes();
             loadFonts();
-            loadPresets();
             loadVideos();
         });
     </script>
