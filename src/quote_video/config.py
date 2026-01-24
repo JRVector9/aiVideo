@@ -92,7 +92,20 @@ VIDEO_FADE_DURATION = 0.5
 
 BGM_VOLUME = 0.15
 
-SUBTITLE_FONT = "NanumGothic"
+# Font Settings (폰트 설정)
+# 사용 가능한 폰트 목록
+AVAILABLE_FONTS = {
+    "KOTRA_BOLD.otf": "KOTRA Bold",
+    "RIDIBatang.otf": "리디바탕",
+    "강원교육모두 Bold.otf": "강원교육모두 Bold",
+    "강원교육모두 Light.otf": "강원교육모두 Light",
+    "강원교육새음.otf": "강원교육새음",
+    "강원교육튼튼.otf": "강원교육튼튼",
+    "강원교육현옥샘.otf": "강원교육현옥샘"
+}
+
+# Subtitle Settings (자막)
+SUBTITLE_FONT = "KOTRA_BOLD.otf"  # 기본 자막 폰트
 SUBTITLE_FONT_SIZE = 48
 SUBTITLE_FONT_COLOR = "white"
 SUBTITLE_OUTLINE_COLOR = "black"
@@ -100,13 +113,15 @@ SUBTITLE_OUTLINE_WIDTH = 2
 SUBTITLE_POSITION = "bottom"
 
 # Quote Text Overlay Settings (명언 텍스트 오버레이)
-QUOTE_FONT = "NanumMyeongjo-Bold"  # 명조체 (우아한 느낌)
+QUOTE_FONT = "RIDIBatang.otf"  # 기본 명언 폰트 (우아한 느낌)
 QUOTE_FONT_SIZE = 72
 QUOTE_FONT_COLOR = "white"
 QUOTE_OUTLINE_COLOR = "black"
 QUOTE_OUTLINE_WIDTH = 3
 QUOTE_SHADOW_OFFSET = 2  # 그림자 오프셋
 
+# Author Text Settings (저자 텍스트)
+AUTHOR_FONT = "RIDIBatang.otf"  # 기본 저자 폰트
 AUTHOR_FONT_SIZE = 52  # 저자 이름은 명언보다 작게
 AUTHOR_OUTLINE_WIDTH = 2
 

@@ -24,6 +24,7 @@ from .config import (
     QUOTE_OUTLINE_COLOR,
     QUOTE_OUTLINE_WIDTH,
     QUOTE_SHADOW_OFFSET,
+    AUTHOR_FONT,
     AUTHOR_FONT_SIZE,
     AUTHOR_OUTLINE_WIDTH,
     FONT_DIR,
@@ -65,7 +66,10 @@ class VideoComposer:
         subtitle_font_color: Optional[str] = None,
         subtitle_outline_color: Optional[str] = None,
         subtitle_outline_width: Optional[int] = None,
-        subtitle_position: Optional[str] = None
+        subtitle_position: Optional[str] = None,
+        # 명언/저자 텍스트 폰트 옵션
+        quote_font: Optional[str] = None,
+        author_font: Optional[str] = None
     ) -> Path:
         """
         단일 씬 합성 (이미지 + 오디오 + 자막 + 명언 텍스트)
@@ -104,7 +108,8 @@ class VideoComposer:
         video_filter = self._build_video_filter(
             duration, fade_in, fade_out, subtitle_path, quote_text, author, width, height,
             subtitle_font, subtitle_font_size, subtitle_font_color,
-            subtitle_outline_color, subtitle_outline_width, subtitle_position
+            subtitle_outline_color, subtitle_outline_width, subtitle_position,
+            quote_font, author_font
         )
 
         # FFmpeg 명령 구성
@@ -214,7 +219,9 @@ class VideoComposer:
         subtitle_font_color: Optional[str] = None,
         subtitle_outline_color: Optional[str] = None,
         subtitle_outline_width: Optional[int] = None,
-        subtitle_position: Optional[str] = None
+        subtitle_position: Optional[str] = None,
+        quote_font: Optional[str] = None,
+        author_font: Optional[str] = None
     ) -> str:
         """비디오 필터 문자열 구성"""
         filters = []
@@ -233,7 +240,9 @@ class VideoComposer:
 
         # 명언 텍스트 오버레이 (drawtext 필터)
         if quote_text:
-            quote_filter = self._build_quote_text_filter(quote_text, author, width, height)
+            quote_filter = self._build_quote_text_filter(
+                quote_text, author, width, height, quote_font, author_font
+            )
             if quote_filter:
                 filters.append(quote_filter)
 
@@ -249,7 +258,9 @@ class VideoComposer:
                 # subtitles 필터 사용 (ASS 파일 지원)
                 # 경로의 특수 문자 이스케이프
                 escaped_path = str(ass_path).replace('\\', '/').replace(':', '\\:')
-                subtitle_filter = f"subtitles={escaped_path}"
+                escaped_font_dir = str(FONT_DIR).replace('\\', '/').replace(':', '\\:')
+                # fontsdir 옵션 추가 (한글 폰트 경로 지정)
+                subtitle_filter = f"subtitles={escaped_path}:fontsdir={escaped_font_dir}"
                 filters.append(subtitle_filter)
 
         return ",".join(filters)
@@ -259,7 +270,9 @@ class VideoComposer:
         quote_text: str,
         author: Optional[str],
         width: int,
-        height: int
+        height: int,
+        quote_font: Optional[str] = None,
+        author_font: Optional[str] = None
     ) -> str:
         """명언 텍스트 drawtext 필터 구성
 
@@ -268,15 +281,18 @@ class VideoComposer:
             author: 저자 이름 (선택)
             width: 영상 가로 해상도
             height: 영상 세로 해상도
+            quote_font: 명언 텍스트 폰트 파일명 (선택)
+            author_font: 저자 텍스트 폰트 파일명 (선택)
 
         Returns:
             drawtext 필터 문자열
         """
-        # 폰트 파일 경로 (시스템 폰트 사용)
-        # FFmpeg는 fontfile 대신 font 파라미터로 시스템 폰트 사용 가능
+        # 폰트 파일 절대 경로
+        quote_font_file = FONT_DIR / (quote_font or QUOTE_FONT)
+        author_font_file = FONT_DIR / (author_font or AUTHOR_FONT)
 
         # 텍스트 이스케이프 (FFmpeg 특수 문자 처리)
-        escaped_quote = quote_text.replace("'", "'\\\\\\''").replace(":", "\\:")
+        escaped_quote = quote_text.replace("'", "'\\\\\\''").replace(":", "\\:").replace("\\", "\\\\\\\\")
 
         # 명언 본문 필터
         # x=(w-text_w)/2: 가로 중앙
@@ -284,7 +300,7 @@ class VideoComposer:
         quote_filter = (
             f"drawtext="
             f"text='{escaped_quote}':"
-            f"font={QUOTE_FONT}:"
+            f"fontfile='{quote_font_file}':"
             f"fontsize={QUOTE_FONT_SIZE}:"
             f"fontcolor={QUOTE_FONT_COLOR}:"
             f"borderw={QUOTE_OUTLINE_WIDTH}:"
@@ -298,12 +314,12 @@ class VideoComposer:
 
         # 저자 이름 필터 (있는 경우)
         if author:
-            escaped_author = f"- {author}".replace("'", "'\\\\\\''").replace(":", "\\:")
+            escaped_author = f"- {author}".replace("'", "'\\\\\\''").replace(":", "\\:").replace("\\", "\\\\\\\\")
 
             author_filter = (
                 f"drawtext="
                 f"text='{escaped_author}':"
-                f"font={QUOTE_FONT}:"
+                f"fontfile='{author_font_file}':"
                 f"fontsize={AUTHOR_FONT_SIZE}:"
                 f"fontcolor={QUOTE_FONT_COLOR}:"
                 f"borderw={AUTHOR_OUTLINE_WIDTH}:"
@@ -383,7 +399,9 @@ class VideoComposer:
         """SRT 자막을 ASS 형식으로 변환 (시스템 폰트 사용)"""
         try:
             # 기본값 설정 (config 값 사용)
-            fontname = subtitle_font or SUBTITLE_FONT
+            font_file = subtitle_font or SUBTITLE_FONT
+            # 폰트 파일명에서 확장자 제거 (ASS Fontname용)
+            fontname = Path(font_file).stem
             fontsize = subtitle_font_size or SUBTITLE_FONT_SIZE
             font_color = subtitle_font_color or SUBTITLE_FONT_COLOR
             outline_color_value = subtitle_outline_color or SUBTITLE_OUTLINE_COLOR

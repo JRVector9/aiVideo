@@ -539,19 +539,6 @@
                 <div class="section-title">📝 자막 설정 (전역 설정)</div>
                 <div class="settings-grid">
                     <div class="form-group">
-                        <label>자막 폰트</label>
-                        <select id="subtitleFont" onchange="autoSave()">
-                            <option value="">기본값 (NanumGothic)</option>
-                            <option value="NanumGothic">NanumGothic</option>
-                            <option value="NanumMyeongjo">NanumMyeongjo</option>
-                            <option value="NanumGothicBold">NanumGothicBold</option>
-                            <option value="NanumMyeongjo-Bold">NanumMyeongjo-Bold</option>
-                            <option value="Arial">Arial</option>
-                            <option value="Helvetica">Helvetica</option>
-                        </select>
-                        <div class="hint">자막에 사용할 폰트</div>
-                    </div>
-                    <div class="form-group">
                         <label>자막 크기</label>
                         <input type="number" id="subtitleFontSize" placeholder="48 (기본값)" min="20" max="120" oninput="autoSave()">
                         <div class="hint">자막 폰트 크기 (20-120)</div>
@@ -580,6 +567,34 @@
                         <label>외곽선 두께</label>
                         <input type="number" id="subtitleOutlineWidth" placeholder="2 (기본값)" min="0" max="10" oninput="autoSave()">
                         <div class="hint">자막 외곽선 두께 (0-10)</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 명언/저자 텍스트 폰트 설정 섹션 -->
+            <div class="section">
+                <div class="section-title">🎨 명언/저자 텍스트 폰트 설정 (전역 설정)</div>
+                <div class="settings-grid">
+                    <div class="form-group">
+                        <label>명언 텍스트 폰트 (중앙 상단)</label>
+                        <select id="quoteFont" onchange="autoSave()">
+                            <option value="">기본값 (RIDIBatang.otf)</option>
+                        </select>
+                        <div class="hint">화면 중앙 상단에 표시될 명언 텍스트 폰트</div>
+                    </div>
+                    <div class="form-group">
+                        <label>저자 텍스트 폰트 (중앙 하단)</label>
+                        <select id="authorFont" onchange="autoSave()">
+                            <option value="">기본값 (RIDIBatang.otf)</option>
+                        </select>
+                        <div class="hint">화면 중앙 하단에 표시될 저자 텍스트 폰트</div>
+                    </div>
+                    <div class="form-group">
+                        <label>자막 폰트 (하단)</label>
+                        <select id="subtitleFontNew" onchange="autoSave()">
+                            <option value="">기본값 (KOTRA_BOLD.otf)</option>
+                        </select>
+                        <div class="hint">화면 하단 나레이션 자막 폰트</div>
                     </div>
                 </div>
             </div>
@@ -673,12 +688,21 @@
             // 자막 설정 복원
             if (savedSubtitleSettings) {
                 const subtitleSettings = JSON.parse(savedSubtitleSettings);
-                if (subtitleSettings.font) document.getElementById('subtitleFont').value = subtitleSettings.font;
+                if (subtitleSettings.font) document.getElementById('subtitleFontNew').value = subtitleSettings.font;
                 if (subtitleSettings.fontSize) document.getElementById('subtitleFontSize').value = subtitleSettings.fontSize;
                 if (subtitleSettings.position) document.getElementById('subtitlePosition').value = subtitleSettings.position;
                 if (subtitleSettings.fontColor) document.getElementById('subtitleFontColor').value = subtitleSettings.fontColor;
                 if (subtitleSettings.outlineColor) document.getElementById('subtitleOutlineColor').value = subtitleSettings.outlineColor;
                 if (subtitleSettings.outlineWidth) document.getElementById('subtitleOutlineWidth').value = subtitleSettings.outlineWidth;
+            }
+
+            // 폰트 설정 복원
+            const savedFontSettings = localStorage.getItem('fontSettings');
+            if (savedFontSettings) {
+                const fontSettings = JSON.parse(savedFontSettings);
+                if (fontSettings.quoteFont) document.getElementById('quoteFont').value = fontSettings.quoteFont;
+                if (fontSettings.authorFont) document.getElementById('authorFont').value = fontSettings.authorFont;
+                if (fontSettings.subtitleFont) document.getElementById('subtitleFontNew').value = fontSettings.subtitleFont;
             }
 
             renderScenes();
@@ -696,7 +720,7 @@
 
             // 자막 설정 저장
             const subtitleSettings = {
-                font: document.getElementById('subtitleFont').value,
+                font: document.getElementById('subtitleFontNew').value,
                 fontSize: document.getElementById('subtitleFontSize').value,
                 position: document.getElementById('subtitlePosition').value,
                 fontColor: document.getElementById('subtitleFontColor').value,
@@ -704,6 +728,14 @@
                 outlineWidth: document.getElementById('subtitleOutlineWidth').value
             };
             localStorage.setItem('subtitleSettings', JSON.stringify(subtitleSettings));
+
+            // 폰트 설정 저장
+            const fontSettings = {
+                quoteFont: document.getElementById('quoteFont').value,
+                authorFont: document.getElementById('authorFont').value,
+                subtitleFont: document.getElementById('subtitleFontNew').value
+            };
+            localStorage.setItem('fontSettings', JSON.stringify(fontSettings));
 
             // Scenes 저장
             const currentScenes = collectScenes();
@@ -844,14 +876,14 @@
                         <div class="hint">전체 프롬프트가 자동으로 추가됩니다</div>
                     </div>
                     <div class="form-group">
-                        <label>💬 명언 텍스트 (화면 표시용, 선택사항)</label>
+                        <label>💬 중앙 상단 고정 텍스트 (선택사항)</label>
                         <textarea id="quote-text-${index}" placeholder="예: 인생은 고통이다" oninput="autoSave()">${scene.quote_text || ''}</textarea>
-                        <div class="hint">화면에 표시될 명언 본문 (줄바꿈 가능: Shift+Enter)</div>
+                        <div class="hint">화면 중앙 상단에 표시될 텍스트 (줄바꿈 가능: Shift+Enter)</div>
                     </div>
                     <div class="form-group">
-                        <label>✍️ 저자 (선택사항)</label>
+                        <label>✍️ 중앙 하단 고정 텍스트 (선택사항)</label>
                         <input type="text" id="author-${index}" placeholder="예: 붓다" oninput="autoSave()" value="${scene.author || ''}">
-                        <div class="hint">명언 저자 이름</div>
+                        <div class="hint">화면 중앙 하단에 표시될 텍스트</div>
                     </div>
                 </div>
             `).join('');
@@ -995,12 +1027,16 @@
             const [width, height] = resolution.split('x').map(Number);
 
             // 자막 설정 수집
-            const subtitleFont = document.getElementById('subtitleFont').value || null;
+            const subtitleFont = document.getElementById('subtitleFontNew').value || null;
             const subtitleFontSize = document.getElementById('subtitleFontSize').value ? parseInt(document.getElementById('subtitleFontSize').value) : null;
             const subtitlePosition = document.getElementById('subtitlePosition').value || null;
             const subtitleFontColor = document.getElementById('subtitleFontColor').value || null;
             const subtitleOutlineColor = document.getElementById('subtitleOutlineColor').value || null;
             const subtitleOutlineWidth = document.getElementById('subtitleOutlineWidth').value ? parseInt(document.getElementById('subtitleOutlineWidth').value) : null;
+
+            // 명언/저자 텍스트 폰트 설정 수집
+            const quoteFont = document.getElementById('quoteFont').value || null;
+            const authorFont = document.getElementById('authorFont').value || null;
 
             // Global prompt를 각 scene의 image_prompt에 추가
             const processedScenes = scenesData.map(scene => ({
@@ -1030,7 +1066,9 @@
                         subtitle_position: subtitlePosition,
                         subtitle_font_color: subtitleFontColor,
                         subtitle_outline_color: subtitleOutlineColor,
-                        subtitle_outline_width: subtitleOutlineWidth
+                        subtitle_outline_width: subtitleOutlineWidth,
+                        quote_font: quoteFont,
+                        author_font: authorFont
                     })
                 });
 
@@ -1206,6 +1244,45 @@
             `;
         }
 
+        // 폰트 목록 로드
+        async function loadFonts() {
+            const apiUrl = document.getElementById('apiUrl').value;
+
+            try {
+                const response = await fetch(`${apiUrl}/api/fonts`);
+                const data = await response.json();
+
+                const fonts = data.fonts;
+
+                // 폰트 드롭다운 채우기
+                const quoteFontSelect = document.getElementById('quoteFont');
+                const authorFontSelect = document.getElementById('authorFont');
+                const subtitleFontSelect = document.getElementById('subtitleFontNew');
+
+                // 기본 옵션은 유지하고 폰트 옵션 추가
+                for (const [filename, displayName] of Object.entries(fonts)) {
+                    const quoteOption = document.createElement('option');
+                    quoteOption.value = filename;
+                    quoteOption.textContent = displayName;
+                    quoteFontSelect.appendChild(quoteOption);
+
+                    const authorOption = document.createElement('option');
+                    authorOption.value = filename;
+                    authorOption.textContent = displayName;
+                    authorFontSelect.appendChild(authorOption);
+
+                    const subtitleOption = document.createElement('option');
+                    subtitleOption.value = filename;
+                    subtitleOption.textContent = displayName;
+                    subtitleFontSelect.appendChild(subtitleOption);
+                }
+
+                console.log('[Fonts] Loaded font list:', fonts);
+            } catch (error) {
+                console.error('[Fonts] Failed to load fonts:', error);
+            }
+        }
+
         // 영상 목록 로드
         async function loadVideos() {
             const apiUrl = document.getElementById('apiUrl').value;
@@ -1268,6 +1345,7 @@
         // 초기화
         document.addEventListener('DOMContentLoaded', () => {
             initScenes();
+            loadFonts();
             loadVideos();
         });
     </script>

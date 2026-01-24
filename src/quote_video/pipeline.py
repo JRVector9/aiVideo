@@ -27,6 +27,9 @@ class Scene:
     subtitle_outline_color: Optional[str] = None
     subtitle_outline_width: Optional[int] = None
     subtitle_position: Optional[str] = None
+    # 명언/저자 텍스트 폰트 옵션 (씬별 설정, 선택사항)
+    quote_font: Optional[str] = None
+    author_font: Optional[str] = None
 
 
 class QuoteVideoPipeline:
@@ -68,7 +71,10 @@ class QuoteVideoPipeline:
         subtitle_font_color: Optional[str] = None,
         subtitle_outline_color: Optional[str] = None,
         subtitle_outline_width: Optional[int] = None,
-        subtitle_position: Optional[str] = None
+        subtitle_position: Optional[str] = None,
+        # 전역 명언/저자 텍스트 폰트 설정 (모든 씬에 적용, Scene별 설정이 우선)
+        quote_font: Optional[str] = None,
+        author_font: Optional[str] = None
     ) -> Path:
         """
         씬 데이터로부터 최종 영상 생성
@@ -213,12 +219,14 @@ class QuoteVideoPipeline:
             author=scene.author,
             width=image_width,
             height=image_height,
-            subtitle_font=subtitle_font,
-            subtitle_font_size=subtitle_font_size,
-            subtitle_font_color=subtitle_font_color,
-            subtitle_outline_color=subtitle_outline_color,
-            subtitle_outline_width=subtitle_outline_width,
-            subtitle_position=subtitle_position
+            subtitle_font=scene.subtitle_font or subtitle_font,
+            subtitle_font_size=scene.subtitle_font_size or subtitle_font_size,
+            subtitle_font_color=scene.subtitle_font_color or subtitle_font_color,
+            subtitle_outline_color=scene.subtitle_outline_color or subtitle_outline_color,
+            subtitle_outline_width=scene.subtitle_outline_width or subtitle_outline_width,
+            subtitle_position=scene.subtitle_position or subtitle_position,
+            quote_font=scene.quote_font or quote_font,
+            author_font=scene.author_font or author_font
         )
 
         print(f"[Scene {scene_num}] ✅ Scene completed")

@@ -17,7 +17,7 @@ import json
 import re
 
 from quote_video.pipeline import QuoteVideoPipeline, Scene
-from quote_video.config import OUTPUT_DIR, PROJECT_ROOT
+from quote_video.config import OUTPUT_DIR, PROJECT_ROOT, AVAILABLE_FONTS
 from job_manager import JobManager, JobStatus
 from prompt_manager import PromptManager
 
@@ -148,6 +148,9 @@ class VideoRequest(BaseModel):
     subtitle_outline_color: Optional[str] = None
     subtitle_outline_width: Optional[int] = None
     subtitle_position: Optional[str] = None
+    # 전역 명언/저자 텍스트 폰트 설정 (선택사항)
+    quote_font: Optional[str] = None
+    author_font: Optional[str] = None
 
 def process_video_job(
     job_id: str,
@@ -162,6 +165,8 @@ def process_video_job(
     subtitle_outline_color: Optional[str] = None,
     subtitle_outline_width: Optional[int] = None,
     subtitle_position: Optional[str] = None,
+    quote_font: Optional[str] = None,
+    author_font: Optional[str] = None,
     # 프롬프트 저장용 원본 데이터
     original_scenes: Optional[List[Dict]] = None,
     global_prompt: Optional[str] = None
@@ -205,7 +210,9 @@ def process_video_job(
             subtitle_font_color=subtitle_font_color,
             subtitle_outline_color=subtitle_outline_color,
             subtitle_outline_width=subtitle_outline_width,
-            subtitle_position=subtitle_position
+            subtitle_position=subtitle_position,
+            quote_font=quote_font,
+            author_font=author_font
         )
 
         print(f"[Job {job_id}] Video created successfully: {result_path}")
@@ -325,6 +332,8 @@ async def create_video(request: VideoRequest, background_tasks: BackgroundTasks)
             request.subtitle_outline_color,
             request.subtitle_outline_width,
             request.subtitle_position,
+            request.quote_font,
+            request.author_font,
             original_scenes,  # 프롬프트 저장용
             request.global_prompt  # 전역 프롬프트
         )
@@ -461,6 +470,13 @@ async def download_video(filename: str):
         media_type="video/mp4",
         filename=filename
     )
+
+@app.get("/api/fonts")
+async def list_fonts():
+    """사용 가능한 폰트 목록"""
+    return {
+        "fonts": AVAILABLE_FONTS
+    }
 
 @app.get("/api/prompts")
 async def list_prompts(limit: int = 50):
