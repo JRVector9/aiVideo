@@ -476,7 +476,8 @@
                 <div class="form-group">
                     <label class="form-label" for="imageResolution">Image Resolution</label>
                     <select id="imageResolution" class="form-select">
-                        <option value="1920x1080">1920x1080 (Full HD)</option>
+                        <option value="1080x1920">1080x1920 (세로 9:16)</option>
+                        <option value="1920x1080">1920x1080 (가로 16:9)</option>
                         <option value="1280x720">1280x720 (HD)</option>
                         <option value="3840x2160">3840x2160 (4K)</option>
                     </select>
@@ -538,7 +539,7 @@
         // Load API settings from localStorage
         function loadApiSettings() {
             const apiUrl = localStorage.getItem('apiUrl') || 'https://aivideo.jrai.space';
-            const imageResolution = localStorage.getItem('imageResolution') || '1920x1080';
+            const imageResolution = localStorage.getItem('imageResolution') || '1080x1920';
 
             document.getElementById('apiUrl').value = apiUrl;
             document.getElementById('imageResolution').value = imageResolution;

@@ -42,9 +42,9 @@ AVAILABLE_POSITIONS = {
 class VideoConfig(BaseModel):
     """영상 생성 설정 검증 모델"""
 
-    # 이미지 설정
-    image_width: int = 1920
-    image_height: int = 1080
+    # 이미지 설정 (기본값: 세로 영상 9:16)
+    image_width: int = 1080
+    image_height: int = 1920
 
     # 전역 프롬프트
     global_prompt: Optional[str] = None
@@ -126,7 +126,7 @@ CONFIG_SCHEMA = {
                 "min": 512,
                 "max": 2048,
                 "step": 64,
-                "default": 1920,
+                "default": 1080,
                 "hint": "이미지 가로 해상도 (픽셀)"
             },
             "image_height": {
@@ -135,7 +135,7 @@ CONFIG_SCHEMA = {
                 "min": 512,
                 "max": 2048,
                 "step": 64,
-                "default": 1080,
+                "default": 1920,
                 "hint": "이미지 세로 해상도 (픽셀)"
             }
         }
