@@ -616,7 +616,7 @@
         async function loadPresets() {
             try {
                 const apiUrl = localStorage.getItem('apiUrl') || 'https://aivideo.jrai.space';
-                const response = await fetch(`${apiUrl}/config/presets`);
+                const response = await fetch(`${apiUrl}/api/config/presets`);
 
                 if (!response.ok) {
                     throw new Error('Failed to load presets');
@@ -678,7 +678,7 @@
 
             try {
                 const apiUrl = localStorage.getItem('apiUrl') || 'https://aivideo.jrai.space';
-                const response = await fetch(`${apiUrl}/config/presets/${presetName}`);
+                const response = await fetch(`${apiUrl}/api/config/presets/${presetName}`);
 
                 if (!response.ok) {
                     throw new Error('Failed to load preset');
@@ -718,7 +718,7 @@
                 const config = collectCurrentConfig();
                 const apiUrl = localStorage.getItem('apiUrl') || 'https://aivideo.jrai.space';
 
-                const response = await fetch(`${apiUrl}/config/presets`, {
+                const response = await fetch(`${apiUrl}/api/config/presets/${name}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -765,7 +765,7 @@
 
             try {
                 const apiUrl = localStorage.getItem('apiUrl') || 'https://aivideo.jrai.space';
-                const response = await fetch(`${apiUrl}/config/presets/${presetName}`, {
+                const response = await fetch(`${apiUrl}/api/config/presets/${presetName}`, {
                     method: 'DELETE'
                 });
 
