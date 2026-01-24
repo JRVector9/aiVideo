@@ -1,12 +1,13 @@
 """
-FLUX Image Generator using ComfyUI API
-ComfyUI 서버를 통한 FLUX 모델 이미지 생성
+FLUX Image Generator using ComfyUI API or Flux2C API
+ComfyUI 서버 또는 Flux2C API를 통한 FLUX 모델 이미지 생성
 """
 
 import json
 import time
 import uuid
 import requests
+import base64
 import websocket
 from pathlib import Path
 from typing import Optional, Dict, Any
@@ -23,13 +24,27 @@ from .translator import Translator
 
 
 class FluxImageGenerator:
-    """ComfyUI FLUX 모델을 사용한 이미지 생성기"""
+    """ComfyUI 또는 Flux2C API를 사용한 이미지 생성기"""
 
-    def __init__(self, server_url: Optional[str] = None):
+    def __init__(
+        self,
+        server_url: Optional[str] = None,
+        backend: str = "comfyui",
+        flux2c_api_url: Optional[str] = None,
+        flux2c_timeout: int = 120
+    ):
         """
         Args:
             server_url: ComfyUI 서버 URL (기본값: config에서 로드)
+            backend: 이미지 생성 백엔드 ("comfyui" 또는 "flux2c-api")
+            flux2c_api_url: Flux2C API URL (backend="flux2c-api"인 경우 필수)
+            flux2c_timeout: Flux2C API 타임아웃 (초)
         """
+        self.backend = backend
+        self.flux2c_api_url = flux2c_api_url.rstrip("/") if flux2c_api_url else None
+        self.flux2c_timeout = flux2c_timeout
+
+        # ComfyUI 설정
         self.api_endpoint = COMFYUI_API_ENDPOINT
         self.ws_endpoint = COMFYUI_WS_ENDPOINT
         self.view_endpoint = COMFYUI_VIEW_ENDPOINT
@@ -82,17 +97,31 @@ class FluxImageGenerator:
             full_prompt = f"{prompt}, {IMAGE_STYLE_PROMPT}"
 
         print(f"[FluxImageGenerator] Generating image...")
+        print(f"[FluxImageGenerator] Backend: {self.backend}")
         print(f"[FluxImageGenerator] Resolution: {width}x{height}")
         print(f"[FluxImageGenerator] Final prompt: {full_prompt[:100]}...")
 
-        # 워크플로우 준비
-        workflow = self._prepare_workflow(full_prompt, seed, width, height)
+        # 백엔드 선택
+        image_data = None
 
-        # 이미지 생성 요청
-        prompt_id = self._queue_prompt(workflow)
+        # Flux2C API 시도
+        if self.backend == "flux2c-api":
+            try:
+                image_data = self._generate_flux2c_api(full_prompt, width, height, seed)
+            except Exception as e:
+                print(f"[FluxImageGenerator] Flux2C API failed, falling back to ComfyUI: {e}")
+                self.backend = "comfyui"  # Fallback
 
-        # 생성 완료 대기
-        image_data = self._wait_for_completion(prompt_id, timeout)
+        # ComfyUI 사용
+        if self.backend == "comfyui" or image_data is None:
+            # 워크플로우 준비
+            workflow = self._prepare_workflow(full_prompt, seed, width, height)
+
+            # 이미지 생성 요청
+            prompt_id = self._queue_prompt(workflow)
+
+            # 생성 완료 대기
+            image_data = self._wait_for_completion(prompt_id, timeout)
 
         # 이미지 저장
         output_path = Path(output_path)
@@ -213,6 +242,53 @@ class FluxImageGenerator:
 
         print(f"[FluxImageGenerator] Downloaded: {filename}")
         return response.content
+
+    def _generate_flux2c_api(
+        self,
+        prompt: str,
+        width: int,
+        height: int,
+        seed: int = -1,
+        steps: int = 4
+    ) -> bytes:
+        """
+        Flux2C API를 사용하여 이미지 생성
+
+        Args:
+            prompt: 이미지 프롬프트 (영어)
+            width: 이미지 가로 해상도
+            height: 이미지 세로 해상도
+            seed: 시드값 (-1이면 랜덤)
+            steps: 샘플링 스텝 수 (기본값: 4)
+
+        Returns:
+            이미지 데이터 (bytes)
+        """
+        if not self.flux2c_api_url:
+            raise ValueError("Flux2C API URL is not configured")
+
+        print(f"[FluxImageGenerator] Calling Flux2C API: {self.flux2c_api_url}")
+
+        payload = {
+            "prompt": prompt,
+            "width": width,
+            "height": height,
+            "steps": steps,
+            "seed": seed
+        }
+
+        response = requests.post(
+            f"{self.flux2c_api_url}/generate",
+            json=payload,
+            timeout=self.flux2c_timeout
+        )
+        response.raise_for_status()
+
+        data = response.json()
+        image_bytes = base64.b64decode(data["image_base64"])
+
+        print(f"[FluxImageGenerator] Flux2C API completed in {data.get('generation_time', 0):.1f}s")
+        return image_bytes
 
 
 # 테스트용 코드

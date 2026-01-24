@@ -124,11 +124,39 @@ cp .env.example .env
 
 ```bash
 # .env
+# Image Generation Backend (ComfyUI - 기본값)
 COMFYUI_URL=https://comfyui.jrai.space
+
+# Flux2C API (선택사항 - Mac Metal 가속 사용 시)
+# FLUX2C_API_URL=https://your-ngrok-url.ngrok-free.dev
+# FLUX2C_API_TIMEOUT=120
+
+# ElevenLabs API Key
 ELEVENLABS_API_KEY=your_api_key_here  # 발급받은 API 키로 교체
+
+# DeepL API Key (선택사항 - 한글 번역 사용 시)
+DEEPL_API_KEY=your_deepl_api_key_here
 ```
 
 **중요**: `.env` 파일은 절대 Git에 커밋하지 마세요!
+
+### 4. Flux2C API 설정 (선택사항)
+
+**Flux2C API**는 Mac Metal 가속을 사용하여 더 빠른 이미지 생성을 제공합니다.
+
+#### 사용 시나리오
+- **ComfyUI (기본)**: 안정적이고 범용적인 이미지 생성
+- **Flux2C API**: Mac M1/M2/M3에서 Metal 가속 활용 시 더 빠른 생성 속도 (약 36-39초)
+
+#### 설정 방법
+
+1. **Admin 페이지 접속**: `http://localhost:8000/static/admin.html`
+2. **Image Generation Backend** 섹션에서:
+   - Backend 선택: `Flux2C API (Mac Metal 가속)`
+   - Flux2C API URL 입력: `https://your-ngrok-url.ngrok-free.dev`
+3. **Save Settings** 클릭
+
+**참고**: Flux2C API 서버 설정은 logo_minimal 프로젝트의 DEPLOYMENT.md를 참고하세요.
 
 ---
 

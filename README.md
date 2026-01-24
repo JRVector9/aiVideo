@@ -13,7 +13,8 @@ ComfyUI FLUX + ElevenLabs 기반 오디오북 영상 자동 생성 시스템
 
 | 기능 | 설명 | 기술 스택 |
 |------|------|----------|
-| 🎨 **이미지 생성** | Notion 스타일 미니멀 일러스트 (고품질 32B 파라미터) | FLUX.2 Klein Base (ComfyUI) |
+| 🎨 **이미지 생성** | Notion 스타일 미니멀 일러스트 (고품질 32B 파라미터) | FLUX.2 Klein Base (ComfyUI / Flux2C API) |
+| ⚡ **멀티 백엔드** | ComfyUI 또는 Flux2C API 선택 가능 | 관리자 페이지에서 런타임 전환 |
 | 🎙️ **TTS 나레이션** | 고품질 한국어 음성 생성 | ElevenLabs multilingual-v2 |
 | 📝 **자막 동기화** | 정확한 타임스탬프 자막 | Whisper large-v3 |
 | 🎬 **영상 합성** | 전문가급 영상 제작 | FFmpeg |
@@ -45,11 +46,19 @@ cp .env.example .env
 # .env 편집
 COMFYUI_URL=https://comfyui.jrai.space
 ELEVENLABS_API_KEY=your_api_key_here
+
+# 선택사항: Flux2C API (Mac Metal 가속)
+# FLUX2C_API_URL=https://your-ngrok-url.ngrok-free.dev
+# FLUX2C_API_TIMEOUT=120
 ```
 
 **API 키 발급**:
-- ElevenLabs: https://elevenlabs.io/app/settings/api-keys
-- 무료: 10,000 글자/월
+- ElevenLabs: https://elevenlabs.io/app/settings/api-keys (무료: 10,000 글자/월)
+- DeepL (선택): https://www.deepl.com/pro-api (무료: 500,000 글자/월)
+
+**이미지 생성 백엔드 선택**:
+- **ComfyUI (기본)**: 안정적이고 범용적
+- **Flux2C API**: Mac Metal 가속으로 더 빠른 생성 속도 (~36-39초)
 
 ### 3. 테스트 실행
 

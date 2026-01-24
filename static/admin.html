@@ -483,6 +483,30 @@
                     </select>
                 </div>
 
+                <div class="form-group">
+                    <label class="form-label" for="imageBackend">Image Generation Backend</label>
+                    <select id="imageBackend" class="form-select" onchange="toggleFlux2CUrl()">
+                        <option value="comfyui">ComfyUI (기본)</option>
+                        <option value="flux2c-api">Flux2C API (Mac Metal 가속)</option>
+                    </select>
+                    <div style="font-size: 0.75rem; color: var(--text-tertiary); margin-top: 0.5rem;">
+                        Flux2C API는 더 빠른 이미지 생성 속도를 제공합니다 (Mac M2 Metal 가속 사용 시)
+                    </div>
+                </div>
+
+                <div class="form-group" id="flux2cUrlGroup" style="display: none;">
+                    <label class="form-label" for="flux2cApiUrl">Flux2C API URL</label>
+                    <input
+                        type="text"
+                        id="flux2cApiUrl"
+                        class="form-input"
+                        placeholder="https://your-ngrok-url.ngrok-free.dev"
+                    >
+                    <div style="font-size: 0.75rem; color: var(--text-tertiary); margin-top: 0.5rem;">
+                        Flux2C API 서버의 공개 URL (ngrok 또는 직접 노출된 URL)
+                    </div>
+                </div>
+
                 <div class="button-group">
                     <button class="btn btn-primary" onclick="saveApiSettings()">
                         💾 Save Settings
@@ -540,23 +564,50 @@
         function loadApiSettings() {
             const apiUrl = localStorage.getItem('apiUrl') || 'https://aivideo.jrai.space';
             const imageResolution = localStorage.getItem('imageResolution') || '1080x1920';
+            const imageBackend = localStorage.getItem('imageBackend') || 'comfyui';
+            const flux2cApiUrl = localStorage.getItem('flux2cApiUrl') || '';
 
             document.getElementById('apiUrl').value = apiUrl;
             document.getElementById('imageResolution').value = imageResolution;
+            document.getElementById('imageBackend').value = imageBackend;
+            document.getElementById('flux2cApiUrl').value = flux2cApiUrl;
+
+            toggleFlux2CUrl();
+        }
+
+        // Toggle Flux2C API URL field visibility
+        function toggleFlux2CUrl() {
+            const backend = document.getElementById('imageBackend').value;
+            const flux2cUrlGroup = document.getElementById('flux2cUrlGroup');
+
+            if (backend === 'flux2c-api') {
+                flux2cUrlGroup.style.display = 'block';
+            } else {
+                flux2cUrlGroup.style.display = 'none';
+            }
         }
 
         // Save API settings to localStorage
         function saveApiSettings() {
             const apiUrl = document.getElementById('apiUrl').value.trim();
             const imageResolution = document.getElementById('imageResolution').value;
+            const imageBackend = document.getElementById('imageBackend').value;
+            const flux2cApiUrl = document.getElementById('flux2cApiUrl').value.trim();
 
             if (!apiUrl) {
                 showAlert('apiAlert', 'API URL cannot be empty', 'error');
                 return;
             }
 
+            if (imageBackend === 'flux2c-api' && !flux2cApiUrl) {
+                showAlert('apiAlert', 'Flux2C API URL is required when using Flux2C backend', 'error');
+                return;
+            }
+
             localStorage.setItem('apiUrl', apiUrl);
             localStorage.setItem('imageResolution', imageResolution);
+            localStorage.setItem('imageBackend', imageBackend);
+            localStorage.setItem('flux2cApiUrl', flux2cApiUrl);
 
             showAlert('apiAlert', 'API settings saved successfully', 'success');
         }

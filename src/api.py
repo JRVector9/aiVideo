@@ -124,6 +124,9 @@ class VideoRequest(BaseModel):
     clean_temp: Optional[bool] = True
     image_width: Optional[int] = 1920
     image_height: Optional[int] = 1080
+    # 이미지 생성 백엔드 (선택사항)
+    image_backend: Optional[str] = "comfyui"
+    flux2c_api_url: Optional[str] = None
     # 전역 이미지 프롬프트 (선택사항)
     global_prompt: Optional[str] = None
     # 전역 자막 설정 (선택사항)
@@ -152,6 +155,9 @@ def process_video_job(
     subtitle_position: Optional[str] = None,
     quote_font: Optional[str] = None,
     author_font: Optional[str] = None,
+    # 이미지 생성 백엔드
+    image_backend: str = "comfyui",
+    flux2c_api_url: Optional[str] = None,
     # 프롬프트 저장용 원본 데이터
     original_scenes: Optional[List[Dict]] = None,
     global_prompt: Optional[str] = None
@@ -169,6 +175,7 @@ def process_video_job(
 
     try:
         print(f"[Job {job_id}] Starting video generation...")
+        print(f"[Job {job_id}] Image backend: {image_backend}")
         print(f"[Job {job_id}] Image resolution: {image_width}x{image_height}")
 
         # 작업 시작
@@ -180,10 +187,17 @@ def process_video_job(
             progress=5
         )
 
+        # 요청별 pipeline 생성 (backend 설정 적용)
+        print(f"[Job {job_id}] Creating pipeline with backend: {image_backend}")
+        request_pipeline = QuoteVideoPipeline(
+            image_backend=image_backend,
+            flux2c_api_url=flux2c_api_url
+        )
+
         print(f"[Job {job_id}] Calling pipeline.create_video...")
 
         # 영상 생성
-        result_path = pipeline.create_video(
+        result_path = request_pipeline.create_video(
             scenes=scenes,
             output_name=output_name,
             clean_temp=clean_temp,
@@ -319,6 +333,8 @@ async def create_video(request: VideoRequest, background_tasks: BackgroundTasks)
             request.subtitle_position,
             request.quote_font,
             request.author_font,
+            request.image_backend,  # 이미지 생성 백엔드
+            request.flux2c_api_url,  # Flux2C API URL
             original_scenes,  # 프롬프트 저장용
             request.global_prompt  # 전역 프롬프트
         )

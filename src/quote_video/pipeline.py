@@ -39,17 +39,25 @@ class QuoteVideoPipeline:
         self,
         comfyui_url: Optional[str] = None,
         gemini_api_key: Optional[str] = None,
-        whisper_model: Optional[str] = None
+        whisper_model: Optional[str] = None,
+        image_backend: str = "comfyui",
+        flux2c_api_url: Optional[str] = None
     ):
         """
         Args:
             comfyui_url: ComfyUI 서버 URL
             gemini_api_key: Gemini API 키
             whisper_model: Whisper 모델명
+            image_backend: 이미지 생성 백엔드 ("comfyui" 또는 "flux2c-api")
+            flux2c_api_url: Flux2C API URL (backend="flux2c-api"인 경우)
         """
         print("[Pipeline] Initializing components...")
 
-        self.image_generator = FluxImageGenerator(comfyui_url)
+        self.image_generator = FluxImageGenerator(
+            server_url=comfyui_url,
+            backend=image_backend,
+            flux2c_api_url=flux2c_api_url
+        )
         self.tts_generator = TTSGenerator(gemini_api_key)
         self.subtitle_sync = SubtitleSync(whisper_model)
         self.video_composer = VideoComposer()

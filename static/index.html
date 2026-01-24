@@ -1117,6 +1117,15 @@
             const quoteFont = document.getElementById('quoteFont').value || null;
             const authorFont = document.getElementById('authorFont').value || null;
 
+            // 이미지 생성 백엔드 설정 (localStorage에서 읽기)
+            const imageBackend = localStorage.getItem('imageBackend') || 'comfyui';
+            const flux2cApiUrl = localStorage.getItem('flux2cApiUrl') || null;
+
+            console.log('🖼️ 이미지 백엔드:', imageBackend);
+            if (imageBackend === 'flux2c-api') {
+                console.log('🔗 Flux2C API URL:', flux2cApiUrl);
+            }
+
             // Global prompt를 각 scene의 image_prompt에 추가
             const processedScenes = scenesData.map(scene => ({
                 narration: scene.narration,
@@ -1140,6 +1149,8 @@
                         clean_temp: true,
                         image_width: width,
                         image_height: height,
+                        image_backend: imageBackend,
+                        flux2c_api_url: flux2cApiUrl,
                         subtitle_font: subtitleFont,
                         subtitle_font_size: subtitleFontSize,
                         subtitle_position: subtitlePosition,

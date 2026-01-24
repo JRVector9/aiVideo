@@ -35,6 +35,11 @@ AVAILABLE_POSITIONS = {
     "bottom": "하단"
 }
 
+AVAILABLE_BACKENDS = {
+    "comfyui": "ComfyUI (기본)",
+    "flux2c-api": "Flux2C API (Mac Metal 가속)"
+}
+
 
 # ===========================
 # Pydantic 검증 모델
@@ -45,6 +50,10 @@ class VideoConfig(BaseModel):
     # 이미지 설정 (기본값: 세로 영상 9:16)
     image_width: int = 1080
     image_height: int = 1920
+
+    # 이미지 생성 백엔드
+    image_backend: str = "comfyui"
+    flux2c_api_url: Optional[str] = None
 
     # 전역 프롬프트
     global_prompt: Optional[str] = None
@@ -98,6 +107,13 @@ class VideoConfig(BaseModel):
             raise ValueError(f'사용 가능한 위치가 아닙니다: {v}')
         return v
 
+    @field_validator('image_backend')
+    @classmethod
+    def validate_backend(cls, v: str) -> str:
+        if v not in AVAILABLE_BACKENDS:
+            raise ValueError(f'사용 가능한 백엔드가 아닙니다: {v}')
+        return v
+
 
 class PresetMetadata(BaseModel):
     """프리셋 메타데이터"""
@@ -120,6 +136,20 @@ CONFIG_SCHEMA = {
     "image": {
         "title": "이미지 설정",
         "fields": {
+            "image_backend": {
+                "type": "select",
+                "label": "생성 백엔드",
+                "options": AVAILABLE_BACKENDS,
+                "default": "comfyui",
+                "hint": "이미지 생성에 사용할 백엔드 엔진"
+            },
+            "flux2c_api_url": {
+                "type": "text",
+                "label": "Flux2C API URL",
+                "default": "",
+                "hint": "Flux2C API 사용 시 필수 (예: https://your-ngrok-url.ngrok-free.dev)",
+                "show_if": {"image_backend": "flux2c-api"}
+            },
             "image_width": {
                 "type": "number",
                 "label": "가로 크기",
@@ -240,6 +270,7 @@ class ConfigManager:
             "schema": CONFIG_SCHEMA,
             "fonts": AVAILABLE_FONTS,
             "positions": AVAILABLE_POSITIONS,
+            "backends": AVAILABLE_BACKENDS,
             "defaults": self.get_defaults()
         }
 
