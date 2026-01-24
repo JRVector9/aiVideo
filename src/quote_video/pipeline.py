@@ -16,10 +16,12 @@ from .config import TEMP_DIR, OUTPUT_DIR
 @dataclass
 class Scene:
     """단일 씬 데이터"""
-    narration: str  # 한국어 나레이션 텍스트
+    narration: str  # 나레이션 텍스트 (다국어 지원)
     image_prompt: str  # 영어 이미지 프롬프트
     quote_text: Optional[str] = None  # 명언 본문 (화면에 표시될 텍스트)
     author: Optional[str] = None  # 명언 저자
+    # 언어 설정 (씬별 설정, 선택사항)
+    language: Optional[str] = None  # 언어 코드 (ko, en, ja, zh 등, None=자동 감지)
     # 자막 커스터마이징 옵션 (씬별 설정, 선택사항)
     subtitle_font: Optional[str] = None
     subtitle_font_size: Optional[int] = None
@@ -73,6 +75,8 @@ class QuoteVideoPipeline:
         progress_callback: Optional[callable] = None,
         image_width: int = 1920,
         image_height: int = 1080,
+        # 전역 언어 설정 (모든 씬에 적용, Scene별 설정이 우선)
+        global_language: Optional[str] = None,
         # 전역 자막 설정 (모든 씬에 적용, Scene별 설정이 우선)
         subtitle_font: Optional[str] = None,
         subtitle_font_size: Optional[int] = None,
@@ -129,6 +133,7 @@ class QuoteVideoPipeline:
 
             scene_video = self._process_scene(
                 scene, i, progress_callback, total_scenes, image_width, image_height,
+                global_language,
                 subtitle_font, subtitle_font_size, subtitle_font_color,
                 subtitle_outline_color, subtitle_outline_width, subtitle_position,
                 quote_font, author_font
@@ -182,6 +187,7 @@ class QuoteVideoPipeline:
         total_scenes: int = 1,
         image_width: int = 1920,
         image_height: int = 1080,
+        global_language: Optional[str] = None,
         global_subtitle_font: Optional[str] = None,
         global_subtitle_font_size: Optional[int] = None,
         global_subtitle_font_color: Optional[str] = None,
@@ -223,10 +229,14 @@ class QuoteVideoPipeline:
         if progress_callback:
             progress_callback(f"🎙️ Scene {scene_num}: 음성 생성 중...", int(base_progress + scene_weight * 0.50))
 
+        # 언어 설정: Scene별 설정 우선, 없으면 전역 설정 사용
+        language = scene.language or global_language
+
         audio_path = TEMP_DIR / f"{scene_prefix}_audio.wav"
         self.tts_generator.generate(
             scene.narration,
-            audio_path
+            audio_path,
+            language=language
         )
 
         if progress_callback:
@@ -243,7 +253,8 @@ class QuoteVideoPipeline:
         subtitle_path = TEMP_DIR / f"{scene_prefix}_subtitle.srt"
         self.subtitle_sync.generate_srt(
             audio_path,
-            subtitle_path
+            subtitle_path,
+            language=language
         )
 
         if progress_callback:

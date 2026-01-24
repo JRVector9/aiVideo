@@ -51,7 +51,8 @@ class TTSGenerator:
         output_path: Path,
         voice_id: Optional[str] = None,
         stability: Optional[float] = None,
-        similarity: Optional[float] = None
+        similarity: Optional[float] = None,
+        language: Optional[str] = None
     ) -> Path:
         """
         텍스트를 음성으로 변환
@@ -62,6 +63,7 @@ class TTSGenerator:
             voice_id: 사용할 음성 ID (기본값: config의 ELEVENLABS_VOICE_ID)
             stability: 음성 안정성 0-1 (기본값: config 값)
             similarity: 음성 유사성 0-1 (기본값: config 값)
+            language: 언어 코드 (예: 'ko', 'en', 'ja', 'zh', None=자동 감지)
 
         Returns:
             저장된 오디오 파일 경로
@@ -74,6 +76,7 @@ class TTSGenerator:
         print(f"[TTSGenerator] Text length: {len(text)} characters")
         print(f"[TTSGenerator] Text: {text[:100]}...")
         print(f"[TTSGenerator] Voice: {voice}")
+        print(f"[TTSGenerator] Language: {language or 'auto-detect'}")
 
         try:
             # 음성 설정

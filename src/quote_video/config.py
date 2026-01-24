@@ -52,14 +52,14 @@ IMAGE_SEED = -1
 # ===========================
 ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY", "")
 
-# 한국어 음성 (multilingual-v2 모델)
+# 다국어 음성 (multilingual-v2 모델)
 ELEVENLABS_VOICE_ID = "uyVNoMrnUku1dZyVEXwD"  # 사용자 선택 음성
 # 다른 음성 옵션:
 # - Rachel: "21m00Tcm4TlvDq8ikWAM" (여성, 차분)
 # - Domi: "AZnzlk1XvdvUeBnXmlld" (여성, 강인)
 # - Bella: "EXAVITQu4vr4xnSDxMaL" (여성, 부드러움)
 
-ELEVENLABS_MODEL = "eleven_multilingual_v2"  # 한국어 지원
+ELEVENLABS_MODEL = "eleven_multilingual_v2"  # 다국어 지원
 ELEVENLABS_VOICE_STABILITY = 0.2  # 0-1: 낮을수록 다양한 표현
 ELEVENLABS_VOICE_SIMILARITY = 0.75  # 0-1: 높을수록 원본 음색 유지
 ELEVENLABS_STYLE = 0.0  # 0-1: 스타일 강도 (v2 only)
@@ -68,6 +68,29 @@ ELEVENLABS_USE_SPEAKER_BOOST = True  # 명료도 향상
 TTS_SAMPLE_RATE = 44100  # ElevenLabs default
 TTS_CHANNELS = 1
 TTS_BIT_DEPTH = 16
+
+# 지원 언어
+SUPPORTED_LANGUAGES = {
+    "ko": "한국어 (Korean)",
+    "en": "영어 (English)",
+    "ja": "일본어 (Japanese)",
+    "zh": "중국어 (Chinese)",
+    "es": "스페인어 (Spanish)",
+    "fr": "프랑스어 (French)",
+    "de": "독일어 (German)",
+    "it": "이탈리아어 (Italian)",
+    "pt": "포르투갈어 (Portuguese)",
+    "pl": "폴란드어 (Polish)",
+    "tr": "터키어 (Turkish)",
+    "ru": "러시아어 (Russian)",
+    "nl": "네덜란드어 (Dutch)",
+    "cs": "체코어 (Czech)",
+    "ar": "아랍어 (Arabic)",
+    "hi": "힌디어 (Hindi)",
+    "auto": "자동 감지 (Auto-detect)"
+}
+
+DEFAULT_LANGUAGE = "ko"  # 기본 언어
 
 # ===========================
 # DeepL Translation Configuration
@@ -80,7 +103,7 @@ DEEPL_API_URL = "https://api-free.deepl.com/v2/translate"  # Free tier endpoint
 # Whisper Configuration
 # ===========================
 WHISPER_MODEL = "large-v3"
-WHISPER_LANGUAGE = "ko"
+WHISPER_LANGUAGE = "ko"  # 기본 언어 (None=자동 감지)
 
 # ===========================
 # Video Composition Settings

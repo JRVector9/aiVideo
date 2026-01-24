@@ -118,6 +118,7 @@ class SceneInput(BaseModel):
     image_prompt: str
     quote_text: Optional[str] = None  # 명언 텍스트 (화면 표시용)
     author: Optional[str] = None      # 명언 저자
+    language: Optional[str] = None    # 언어 코드 (ko, en, ja, zh 등)
 
 class VideoRequest(BaseModel):
     scenes: List[SceneInput]
@@ -129,6 +130,8 @@ class VideoRequest(BaseModel):
     flux2c_api_url: Optional[str] = None
     # 전역 이미지 프롬프트 (선택사항)
     global_prompt: Optional[str] = None
+    # 전역 언어 설정 (선택사항)
+    global_language: Optional[str] = None
     # 전역 자막 설정 (선택사항)
     subtitle_font: Optional[str] = None
     subtitle_font_size: Optional[int] = None
@@ -147,6 +150,7 @@ def process_video_job(
     clean_temp: bool,
     image_width: int = 1920,
     image_height: int = 1080,
+    global_language: Optional[str] = None,
     subtitle_font: Optional[str] = None,
     subtitle_font_size: Optional[int] = None,
     subtitle_font_color: Optional[str] = None,
@@ -204,6 +208,7 @@ def process_video_job(
             progress_callback=update_progress,
             image_width=image_width,
             image_height=image_height,
+            global_language=global_language,
             subtitle_font=subtitle_font,
             subtitle_font_size=subtitle_font_size,
             subtitle_font_color=subtitle_font_color,
@@ -290,7 +295,8 @@ async def create_video(request: VideoRequest, background_tasks: BackgroundTasks)
                 "narration": s.narration,
                 "image_prompt": s.image_prompt,
                 "quote_text": s.quote_text,
-                "author": s.author
+                "author": s.author,
+                "language": s.language
             }
             for s in request.scenes
         ]
@@ -301,7 +307,8 @@ async def create_video(request: VideoRequest, background_tasks: BackgroundTasks)
                 narration=s.narration,
                 image_prompt=s.image_prompt,
                 quote_text=s.quote_text,
-                author=s.author
+                author=s.author,
+                language=s.language
             )
             for s in request.scenes
         ]
@@ -325,6 +332,7 @@ async def create_video(request: VideoRequest, background_tasks: BackgroundTasks)
             request.clean_temp,
             request.image_width,
             request.image_height,
+            request.global_language,  # 전역 언어 설정
             request.subtitle_font,
             request.subtitle_font_size,
             request.subtitle_font_color,

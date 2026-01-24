@@ -698,6 +698,29 @@
                         <textarea id="globalImagePrompt" placeholder="예: Minimalist Notion-style illustration, pencil sketch aesthetic, vintage paper background..." oninput="autoSave()"></textarea>
                         <div class="hint">모든 Scene의 이미지 프롬프트에 자동으로 추가됩니다</div>
                     </div>
+                    <div class="form-group">
+                        <label>🌍 전체 언어 설정 (Global Language)</label>
+                        <select id="globalLanguage" onchange="autoSave()">
+                            <option value="">한국어 (기본값)</option>
+                            <option value="ko">한국어 (Korean)</option>
+                            <option value="en">영어 (English)</option>
+                            <option value="ja">일본어 (Japanese)</option>
+                            <option value="zh">중국어 (Chinese)</option>
+                            <option value="es">스페인어 (Spanish)</option>
+                            <option value="fr">프랑스어 (French)</option>
+                            <option value="de">독일어 (German)</option>
+                            <option value="it">이탈리아어 (Italian)</option>
+                            <option value="pt">포르투갈어 (Portuguese)</option>
+                            <option value="pl">폴란드어 (Polish)</option>
+                            <option value="tr">터키어 (Turkish)</option>
+                            <option value="ru">러시아어 (Russian)</option>
+                            <option value="nl">네덜란드어 (Dutch)</option>
+                            <option value="cs">체코어 (Czech)</option>
+                            <option value="ar">아랍어 (Arabic)</option>
+                            <option value="hi">힌디어 (Hindi)</option>
+                        </select>
+                        <div class="hint">모든 Scene의 TTS 및 자막 언어 (각 Scene에서 개별 설정 가능)</div>
+                    </div>
                 </div>
 
                 <div id="scenes-container"></div>
@@ -736,11 +759,13 @@
     <script>
         let scenes = [];
         let globalImagePrompt = '';
+        let globalLanguage = '';
         let draggedElement = null;
 
         // LocalStorage 키
         const STORAGE_KEY = 'aiVideo_scenes';
         const GLOBAL_PROMPT_KEY = 'aiVideo_globalPrompt';
+        const GLOBAL_LANGUAGE_KEY = 'aiVideo_globalLanguage';
         const PROMPT_HISTORY_KEY = 'aiVideo_promptHistory';
         const RESOLUTION_KEY = 'aiVideo_imageResolution';
 
@@ -764,6 +789,12 @@
             if (savedGlobalPrompt) {
                 globalImagePrompt = savedGlobalPrompt;
                 document.getElementById('globalImagePrompt').value = globalImagePrompt;
+            }
+
+            const savedGlobalLanguage = localStorage.getItem(GLOBAL_LANGUAGE_KEY);
+            if (savedGlobalLanguage) {
+                globalLanguage = savedGlobalLanguage;
+                document.getElementById('globalLanguage').value = globalLanguage;
             }
 
             if (savedResolution) {
@@ -798,6 +829,10 @@
             // Global prompt 저장
             globalImagePrompt = document.getElementById('globalImagePrompt').value;
             localStorage.setItem(GLOBAL_PROMPT_KEY, globalImagePrompt);
+
+            // 전역 언어 저장
+            globalLanguage = document.getElementById('globalLanguage').value;
+            localStorage.setItem(GLOBAL_LANGUAGE_KEY, globalLanguage);
 
             // 해상도 저장
             const resolution = document.getElementById('imageResolution').value;
@@ -843,7 +878,7 @@
 
         // Scene 추가
         function addScene() {
-            scenes.push({ narration: '', image_prompt: '', quote_text: '', author: '' });
+            scenes.push({ narration: '', image_prompt: '', quote_text: '', author: '', language: '' });
             renderScenes();
             autoSave();
         }
@@ -970,6 +1005,29 @@
                         <input type="text" id="author-${index}" placeholder="예: 붓다" oninput="autoSave()" value="${scene.author || ''}">
                         <div class="hint">화면 중앙 하단에 표시될 텍스트</div>
                     </div>
+                    <div class="form-group">
+                        <label>🌐 언어 설정 (선택사항)</label>
+                        <select id="language-${index}" onchange="autoSave()">
+                            <option value="">전역 설정 사용</option>
+                            <option value="ko" ${scene.language === 'ko' ? 'selected' : ''}>한국어 (Korean)</option>
+                            <option value="en" ${scene.language === 'en' ? 'selected' : ''}>영어 (English)</option>
+                            <option value="ja" ${scene.language === 'ja' ? 'selected' : ''}>일본어 (Japanese)</option>
+                            <option value="zh" ${scene.language === 'zh' ? 'selected' : ''}>중국어 (Chinese)</option>
+                            <option value="es" ${scene.language === 'es' ? 'selected' : ''}>스페인어 (Spanish)</option>
+                            <option value="fr" ${scene.language === 'fr' ? 'selected' : ''}>프랑스어 (French)</option>
+                            <option value="de" ${scene.language === 'de' ? 'selected' : ''}>독일어 (German)</option>
+                            <option value="it" ${scene.language === 'it' ? 'selected' : ''}>이탈리아어 (Italian)</option>
+                            <option value="pt" ${scene.language === 'pt' ? 'selected' : ''}>포르투갈어 (Portuguese)</option>
+                            <option value="pl" ${scene.language === 'pl' ? 'selected' : ''}>폴란드어 (Polish)</option>
+                            <option value="tr" ${scene.language === 'tr' ? 'selected' : ''}>터키어 (Turkish)</option>
+                            <option value="ru" ${scene.language === 'ru' ? 'selected' : ''}>러시아어 (Russian)</option>
+                            <option value="nl" ${scene.language === 'nl' ? 'selected' : ''}>네덜란드어 (Dutch)</option>
+                            <option value="cs" ${scene.language === 'cs' ? 'selected' : ''}>체코어 (Czech)</option>
+                            <option value="ar" ${scene.language === 'ar' ? 'selected' : ''}>아랍어 (Arabic)</option>
+                            <option value="hi" ${scene.language === 'hi' ? 'selected' : ''}>힌디어 (Hindi)</option>
+                        </select>
+                        <div class="hint">이 씬의 TTS 및 자막 언어 (미설정 시 전역 설정 사용)</div>
+                    </div>
                 </div>
             `).join('');
         }
@@ -982,7 +1040,8 @@
                 narration: document.getElementById(`narration-${index}`).value,
                 image_prompt: document.getElementById(`image-prompt-${index}`).value,
                 quote_text: document.getElementById(`quote-text-${index}`).value,
-                author: document.getElementById(`author-${index}`).value
+                author: document.getElementById(`author-${index}`).value,
+                language: document.getElementById(`language-${index}`).value || null
             }));
         }
 
@@ -1089,6 +1148,7 @@
             const apiUrl = document.getElementById('apiUrl').value;
             const scenesData = collectScenes();
             const globalPrompt = document.getElementById('globalImagePrompt').value;
+            const globalLanguage = document.getElementById('globalLanguage').value;
             const resolution = document.getElementById('imageResolution').value;
 
             // 디버그: Scene 순서 확인
@@ -1139,7 +1199,8 @@
                     ? `${scene.image_prompt}, ${globalPrompt}`
                     : scene.image_prompt,
                 quote_text: scene.quote_text,
-                author: scene.author
+                author: scene.author,
+                language: scene.language || null
             }));
 
             try {
@@ -1152,6 +1213,7 @@
                     body: JSON.stringify({
                         scenes: processedScenes,
                         global_prompt: globalPrompt || null,
+                        global_language: globalLanguage || null,
                         clean_temp: true,
                         image_width: width,
                         image_height: height,
