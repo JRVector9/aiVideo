@@ -113,7 +113,8 @@ class QuoteVideoPipeline:
             scene_video = self._process_scene(
                 scene, i, progress_callback, total_scenes, image_width, image_height,
                 subtitle_font, subtitle_font_size, subtitle_font_color,
-                subtitle_outline_color, subtitle_outline_width, subtitle_position
+                subtitle_outline_color, subtitle_outline_width, subtitle_position,
+                quote_font, author_font
             )
             scene_videos.append(scene_video)
 
@@ -154,7 +155,9 @@ class QuoteVideoPipeline:
         global_subtitle_font_color: Optional[str] = None,
         global_subtitle_outline_color: Optional[str] = None,
         global_subtitle_outline_width: Optional[int] = None,
-        global_subtitle_position: Optional[str] = None
+        global_subtitle_position: Optional[str] = None,
+        global_quote_font: Optional[str] = None,
+        global_author_font: Optional[str] = None
     ) -> Path:
         """단일 씬 처리"""
         scene_prefix = f"scene_{scene_num:03d}"
@@ -225,8 +228,8 @@ class QuoteVideoPipeline:
             subtitle_outline_color=scene.subtitle_outline_color or subtitle_outline_color,
             subtitle_outline_width=scene.subtitle_outline_width or subtitle_outline_width,
             subtitle_position=scene.subtitle_position or subtitle_position,
-            quote_font=scene.quote_font or quote_font,
-            author_font=scene.author_font or author_font
+            quote_font=scene.quote_font or global_quote_font,
+            author_font=scene.author_font or global_author_font
         )
 
         print(f"[Scene {scene_num}] ✅ Scene completed")
