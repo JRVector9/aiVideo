@@ -20,6 +20,7 @@ from quote_video.pipeline import QuoteVideoPipeline, Scene
 from quote_video.config import OUTPUT_DIR, PROJECT_ROOT, AVAILABLE_FONTS
 from job_manager import JobManager, JobStatus
 from prompt_manager import PromptManager
+from config_manager import config_manager
 
 def generate_video_filename() -> str:
     """
@@ -477,6 +478,91 @@ async def list_fonts():
     return {
         "fonts": AVAILABLE_FONTS
     }
+
+
+# ===========================
+# Config Management API
+# ===========================
+
+@app.get("/api/config/schema")
+async def get_config_schema():
+    """
+    설정 스키마 반환
+
+    프론트엔드에서 동적으로 설정 UI를 생성하는데 사용
+    """
+    return config_manager.get_schema()
+
+
+@app.post("/api/config/validate")
+async def validate_config(config: Dict):
+    """
+    설정 검증
+
+    영상 생성 전 설정 값이 유효한지 확인
+    """
+    return config_manager.validate(config)
+
+
+class PresetSaveRequest(BaseModel):
+    config: Dict
+    description: Optional[str] = None
+
+
+@app.get("/api/config/presets")
+async def list_presets():
+    """
+    저장된 프리셋 목록
+
+    사용자가 저장한 모든 프리셋의 메타데이터 반환
+    """
+    presets = config_manager.list_presets()
+    return {
+        "count": len(presets),
+        "presets": presets
+    }
+
+
+@app.post("/api/config/presets/{name}")
+async def save_preset(name: str, request: PresetSaveRequest):
+    """
+    프리셋 저장
+
+    현재 설정을 지정한 이름으로 저장
+    """
+    result = config_manager.save_preset(
+        name=name,
+        config=request.config,
+        description=request.description
+    )
+    if not result["success"]:
+        raise HTTPException(status_code=400, detail=result.get("error", "Failed to save preset"))
+    return result
+
+
+@app.get("/api/config/presets/{name}")
+async def load_preset(name: str):
+    """
+    프리셋 불러오기
+
+    저장된 프리셋의 설정 값 반환
+    """
+    result = config_manager.load_preset(name)
+    if not result["success"]:
+        raise HTTPException(status_code=404, detail=result.get("error", "Preset not found"))
+    return result
+
+
+@app.delete("/api/config/presets/{name}")
+async def delete_preset(name: str):
+    """
+    프리셋 삭제
+    """
+    result = config_manager.delete_preset(name)
+    if not result["success"]:
+        raise HTTPException(status_code=404, detail=result.get("error", "Preset not found"))
+    return {"message": "Preset deleted successfully"}
+
 
 @app.get("/api/prompts")
 async def list_prompts(limit: int = 50):

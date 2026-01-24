@@ -5,6 +5,47 @@ All notable changes to Quote Video System will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.0] - 2026-01-24
+
+### Added
+- **Config Manager 시스템**: 완전한 설정 관리 시스템 추가
+  - `src/config_manager.py`: ConfigManager 클래스
+  - Pydantic 기반 설정 검증 (VideoConfig 모델)
+  - 설정 스키마 정의 (CONFIG_SCHEMA)
+
+- **프리셋 관리 기능**: 사용자 설정 저장/불러오기
+  - 프리셋 저장: 현재 설정을 이름으로 저장
+  - 프리셋 불러오기: 저장된 프리셋으로 설정 복원
+  - 프리셋 삭제: 불필요한 프리셋 제거
+  - 프리셋 목록: 저장된 모든 프리셋 조회
+  - 메타데이터: 이름, 설명, 생성/수정 시간
+
+- **Config API 엔드포인트**:
+  - `GET /api/config/schema`: 설정 스키마 반환 (UI 동적 생성용)
+  - `POST /api/config/validate`: 설정 검증
+  - `GET /api/config/presets`: 프리셋 목록
+  - `POST /api/config/presets/{name}`: 프리셋 저장
+  - `GET /api/config/presets/{name}`: 프리셋 불러오기
+  - `DELETE /api/config/presets/{name}`: 프리셋 삭제
+
+- **프론트엔드 프리셋 UI**:
+  - 프리셋 드롭다운 선택
+  - "불러오기" 버튼
+  - "현재 설정 저장" 버튼
+  - "삭제" 버튼
+  - 상태 메시지 표시
+
+### Technical Details
+- **config_manager.py**:
+  - `VideoConfig`: Pydantic 모델로 이미지, 폰트, 자막 설정 검증
+  - `ConfigManager`: 스키마 제공, 검증, 프리셋 CRUD
+  - `PRESETS_DIR`: presets/ 디렉토리에 JSON 파일로 저장
+  - 파일명 안전화: 특수문자 제거, 최대 100자
+- **api.py**:
+  - `config_manager` 싱글톤 import
+  - `PresetSaveRequest` 모델 추가
+  - RESTful API 구조
+
 ## [1.7.0] - 2026-01-24
 
 ### Added
