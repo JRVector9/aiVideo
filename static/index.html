@@ -756,6 +756,22 @@
         </div>
     </div>
 
+    <!-- Video Player Modal -->
+    <div id="videoPlayerModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🎬 영상 재생</h2>
+                <button class="modal-close" onclick="closeVideoPlayer()">&times;</button>
+            </div>
+            <div id="videoPlayerContent" style="text-align: center;">
+                <video id="videoPlayer" controls style="width: 100%; max-width: 800px; background: #000;">
+                    <source id="videoSource" src="" type="video/mp4">
+                    브라우저가 video 태그를 지원하지 않습니다.
+                </video>
+            </div>
+        </div>
+    </div>
+
     <script>
         let scenes = [];
         let globalImagePrompt = '';
@@ -1122,11 +1138,44 @@
             document.getElementById('promptModal').classList.remove('show');
         }
 
+        // 영상 재생
+        function playVideo(filename) {
+            const apiUrl = document.getElementById('apiUrl').value;
+            const videoPlayer = document.getElementById('videoPlayer');
+            const videoSource = document.getElementById('videoSource');
+
+            // 비디오 소스 설정
+            videoSource.src = `${apiUrl}/api/videos/${filename}`;
+            videoPlayer.load();
+
+            // 모달 열기
+            document.getElementById('videoPlayerModal').classList.add('show');
+
+            // 자동 재생 (선택사항)
+            videoPlayer.play().catch(err => {
+                console.log('자동 재생 실패:', err);
+                // 일부 브라우저는 사용자 인터랙션 없이 자동 재생 불가
+            });
+        }
+
+        // 비디오 플레이어 닫기
+        function closeVideoPlayer() {
+            const videoPlayer = document.getElementById('videoPlayer');
+            videoPlayer.pause();
+            videoPlayer.currentTime = 0;
+            document.getElementById('videoPlayerModal').classList.remove('show');
+        }
+
         // 모달 외부 클릭 시 닫기
         window.onclick = function(event) {
-            const modal = document.getElementById('promptModal');
-            if (event.target === modal) {
+            const promptModal = document.getElementById('promptModal');
+            const videoModal = document.getElementById('videoPlayerModal');
+
+            if (event.target === promptModal) {
                 closePromptModal();
+            }
+            if (event.target === videoModal) {
+                closeVideoPlayer();
             }
         }
 
@@ -1464,6 +1513,7 @@
                             생성: ${new Date(video.created * 1000).toLocaleString('ko-KR')}
                         </div>
                         <div class="button-group">
+                            <button class="btn btn-primary" onclick="playVideo('${video.filename}')">▶️ 재생</button>
                             <button class="btn btn-success" onclick="downloadVideo('${video.filename}')">⬇️ 다운로드</button>
                             <button class="btn btn-info" onclick="viewPromptHistory('${video.filename}')">📝 프롬프트</button>
                         </div>

@@ -467,17 +467,61 @@ async def list_videos():
     }
 
 @app.get("/api/videos/{filename}")
-async def download_video(filename: str):
-    """영상 다운로드"""
+async def download_video(filename: str, request: Request):
+    """영상 다운로드 및 스트리밍 (Range Request 지원)"""
     video_path = OUTPUT_DIR / filename
 
     if not video_path.exists():
         raise HTTPException(status_code=404, detail="Video not found")
 
+    # 파일 크기 확인
+    file_size = video_path.stat().st_size
+
+    # Range 헤더 확인
+    range_header = request.headers.get("range")
+
+    if range_header:
+        # Range 헤더 파싱 (예: "bytes=0-1023")
+        try:
+            byte_range = range_header.replace("bytes=", "").split("-")
+            start = int(byte_range[0]) if byte_range[0] else 0
+            end = int(byte_range[1]) if byte_range[1] else file_size - 1
+
+            # 범위 검증
+            if start >= file_size or end >= file_size or start > end:
+                raise HTTPException(status_code=416, detail="Range not satisfiable")
+
+            # 파일에서 해당 범위만 읽기
+            with open(video_path, "rb") as f:
+                f.seek(start)
+                data = f.read(end - start + 1)
+
+            # 206 Partial Content 응답
+            from fastapi.responses import Response
+            return Response(
+                content=data,
+                status_code=206,
+                headers={
+                    "Content-Range": f"bytes {start}-{end}/{file_size}",
+                    "Accept-Ranges": "bytes",
+                    "Content-Length": str(len(data)),
+                    "Content-Type": "video/mp4",
+                },
+                media_type="video/mp4"
+            )
+        except (ValueError, IndexError) as e:
+            # Range 헤더 파싱 실패 시 전체 파일 반환
+            print(f"[API] Range header parse error: {e}")
+            pass
+
+    # Range 헤더가 없거나 파싱 실패 시 전체 파일 반환
     return FileResponse(
         path=video_path,
         media_type="video/mp4",
-        filename=filename
+        filename=filename,
+        headers={
+            "Accept-Ranges": "bytes"
+        }
     )
 
 @app.get("/api/fonts")
