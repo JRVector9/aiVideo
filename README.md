@@ -4,7 +4,7 @@ ComfyUI FLUX + ElevenLabs 기반 오디오북 영상 자동 생성 시스템
 
 ![License](https://img.shields.io/badge/License-MIT-green.svg)
 ![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)
-![FLUX](https://img.shields.io/badge/FLUX.2-Klein%20Base-purple.svg)
+![FLUX](https://img.shields.io/badge/FLUX.1-Schnell-purple.svg)
 ![ElevenLabs](https://img.shields.io/badge/ElevenLabs-TTS-orange.svg)
 
 ---
@@ -13,7 +13,7 @@ ComfyUI FLUX + ElevenLabs 기반 오디오북 영상 자동 생성 시스템
 
 | 기능 | 설명 | 기술 스택 |
 |------|------|----------|
-| 🎨 **이미지 생성** | Notion 스타일 미니멀 일러스트 (고품질 32B 파라미터) | FLUX.2 Klein Base (ComfyUI / Flux2C API) |
+| 🎨 **이미지 생성** | Notion 스타일 미니멀 일러스트 (빠른 생성) | FLUX.1 Schnell (ComfyUI / Flux2C API) |
 | ⚡ **멀티 백엔드** | ComfyUI 또는 Flux2C API 선택 가능 | 관리자 페이지에서 런타임 전환 |
 | 🎙️ **TTS 나레이션** | 고품질 한국어 음성 생성 | ElevenLabs multilingual-v2 |
 | 📝 **자막 동기화** | 정확한 타임스탬프 자막 | Whisper large-v3 |
@@ -91,7 +91,7 @@ python test_subtitle.py
 
 ### API 요구사항
 
-- **ComfyUI 서버**: https://comfyui.jrai.space (FLUX.2 Klein Base 모델)
+- **ComfyUI 서버**: https://comfyui.jrai.space (FLUX.1 Schnell 모델)
 - **ElevenLabs API**: 무료 10,000 글자/월
 
 ### 디스크 공간
@@ -225,7 +225,7 @@ pipeline.create_video(
 
 IMAGE_WIDTH = 1920
 IMAGE_HEIGHT = 1080
-IMAGE_STEPS = 25             # FLUX.2 Klein Base: 25-50 steps (고품질)
+IMAGE_STEPS = 4              # FLUX.1 Schnell: 4-8 steps (빠른 생성)
 IMAGE_CFG_SCALE = 1.0        # FLUX uses CFG 1.0
 IMAGE_SAMPLER = "euler"
 IMAGE_SCHEDULER = "simple"
@@ -298,12 +298,12 @@ python -m src.quote_video.pipeline
 
 | 작업 | 예상 시간 | 비고 |
 |------|----------|------|
-| 이미지 생성 | 40-90초 | FLUX.2 Klein Base (25 steps, 고품질) |
+| 이미지 생성 | 15-30초 | FLUX.1 Schnell (4 steps, 빠른 생성) |
 | TTS 생성 | 3-5초 | ElevenLabs API |
 | 자막 생성 | 5-10초 | Whisper large-v3 |
 | 영상 합성 | 10-15초 | 1분 영상 기준 |
-| **총 1씬** | **~80초** | |
-| **총 10씬 영상** | **~14분** | 순차 처리 |
+| **총 1씬** | **~40초** | |
+| **총 10씬 영상** | **~7분** | 순차 처리 |
 
 ---
 
@@ -407,7 +407,7 @@ MIT License
 
 - macOS 14.x (Apple Silicon)
 - Python 3.14
-- FLUX.2 Klein Base 4B (ComfyUI, FP8 양자화)
+- FLUX.1 Schnell (ComfyUI)
 - ElevenLabs API v2.31.0
 - Whisper large-v3
 - FFmpeg 6.x
