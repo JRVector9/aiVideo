@@ -104,8 +104,17 @@ class QuoteVideoPipeline:
         print(f"[Pipeline] Total scenes: {len(scenes)}")
         print(f"{'='*60}\n")
 
+        if progress_callback:
+            progress_callback("🚀 파이프라인 초기화 중...", 1)
+
         scene_videos = []
         total_scenes = len(scenes)
+
+        if progress_callback:
+            progress_callback(f"📋 총 {total_scenes}개 Scene 준비 완료", 5)
+
+        if progress_callback:
+            progress_callback("🎬 영상 생성 시작...", 10)
 
         # 각 씬 처리
         for i, scene in enumerate(scenes, 1):
@@ -114,8 +123,8 @@ class QuoteVideoPipeline:
             # 씬 처리 시작
             if progress_callback:
                 progress_callback(
-                    f"🎬 Scene {i}/{total_scenes} 처리 중...",
-                    int(20 + (i-1) * 60 / total_scenes)
+                    f"🎬 Scene {i}/{total_scenes} 준비 중...",
+                    int(10 + (i-1) * 70 / total_scenes)
                 )
 
             scene_video = self._process_scene(
@@ -129,19 +138,34 @@ class QuoteVideoPipeline:
         # 최종 영상 합성
         print(f"\n--- Composing Final Video ---")
         if progress_callback:
-            progress_callback("🎞️ 최종 영상 합성 중...", 85)
+            progress_callback("🎞️ 최종 영상 합성 준비 중...", 81)
+
+        if progress_callback:
+            progress_callback("🎞️ 씬 병합 시작...", 83)
 
         output_path = OUTPUT_DIR / f"{output_name}.mp4"
+
+        if progress_callback:
+            progress_callback("🎞️ 최종 영상 합성 중...", 87)
+
         final_video = self.video_composer.compose_video(
             scene_videos,
             output_path,
             bgm_path
         )
 
+        if progress_callback:
+            progress_callback("🎞️ 최종 영상 인코딩 중...", 93)
+
         # 임시 파일 정리
         if clean_temp:
             print("[Pipeline] Cleaning temporary files...")
+            if progress_callback:
+                progress_callback("🧹 임시 파일 정리 중...", 96)
             self._clean_temp_files()
+
+        if progress_callback:
+            progress_callback("✅ 영상 생성 완료!", 100)
 
         print(f"\n{'='*60}")
         print(f"[Pipeline] ✅ Video created successfully!")
@@ -169,12 +193,16 @@ class QuoteVideoPipeline:
     ) -> Path:
         """단일 씬 처리"""
         scene_prefix = f"scene_{scene_num:03d}"
-        base_progress = 20 + (scene_num - 1) * 60 / total_scenes
+        base_progress = 10 + (scene_num - 1) * 70 / total_scenes
+        scene_weight = 70 / total_scenes  # 각 씬이 차지하는 전체 진행률
 
-        # 1. 이미지 생성
+        # 1. 이미지 생성 (40% of scene weight)
         print(f"[Scene {scene_num}] Generating image...")
         if progress_callback:
-            progress_callback(f"🎨 Scene {scene_num}: 이미지 생성 중...", int(base_progress + 5))
+            progress_callback(f"🎨 Scene {scene_num}: 이미지 생성 시작...", int(base_progress + scene_weight * 0.02))
+
+        if progress_callback:
+            progress_callback(f"🎨 Scene {scene_num}: 이미지 생성 중...", int(base_progress + scene_weight * 0.10))
 
         image_path = TEMP_DIR / f"{scene_prefix}_image.png"
         self.image_generator.generate(
@@ -184,10 +212,16 @@ class QuoteVideoPipeline:
             height=image_height
         )
 
-        # 2. TTS 생성
+        if progress_callback:
+            progress_callback(f"🎨 Scene {scene_num}: 이미지 생성 완료", int(base_progress + scene_weight * 0.40))
+
+        # 2. TTS 생성 (25% of scene weight)
         print(f"[Scene {scene_num}] Generating TTS...")
         if progress_callback:
-            progress_callback(f"🎙️ Scene {scene_num}: 음성 생성 중...", int(base_progress + 15))
+            progress_callback(f"🎙️ Scene {scene_num}: 음성 생성 시작...", int(base_progress + scene_weight * 0.42))
+
+        if progress_callback:
+            progress_callback(f"🎙️ Scene {scene_num}: 음성 생성 중...", int(base_progress + scene_weight * 0.50))
 
         audio_path = TEMP_DIR / f"{scene_prefix}_audio.wav"
         self.tts_generator.generate(
@@ -195,10 +229,16 @@ class QuoteVideoPipeline:
             audio_path
         )
 
-        # 3. 자막 생성
+        if progress_callback:
+            progress_callback(f"🎙️ Scene {scene_num}: 음성 생성 완료", int(base_progress + scene_weight * 0.65))
+
+        # 3. 자막 생성 (15% of scene weight)
         print(f"[Scene {scene_num}] Generating subtitles...")
         if progress_callback:
-            progress_callback(f"📝 Scene {scene_num}: 자막 생성 중...", int(base_progress + 25))
+            progress_callback(f"📝 Scene {scene_num}: 자막 생성 시작...", int(base_progress + scene_weight * 0.67))
+
+        if progress_callback:
+            progress_callback(f"📝 Scene {scene_num}: 자막 생성 중...", int(base_progress + scene_weight * 0.72))
 
         subtitle_path = TEMP_DIR / f"{scene_prefix}_subtitle.srt"
         self.subtitle_sync.generate_srt(
@@ -206,10 +246,16 @@ class QuoteVideoPipeline:
             subtitle_path
         )
 
-        # 4. 씬 합성
+        if progress_callback:
+            progress_callback(f"📝 Scene {scene_num}: 자막 생성 완료", int(base_progress + scene_weight * 0.80))
+
+        # 4. 씬 합성 (20% of scene weight)
         print(f"[Scene {scene_num}] Composing scene...")
         if progress_callback:
-            progress_callback(f"🎬 Scene {scene_num}: 합성 중...", int(base_progress + 40))
+            progress_callback(f"🎬 Scene {scene_num}: 합성 시작...", int(base_progress + scene_weight * 0.82))
+
+        if progress_callback:
+            progress_callback(f"🎬 Scene {scene_num}: 합성 중...", int(base_progress + scene_weight * 0.90))
 
         scene_video_path = TEMP_DIR / f"{scene_prefix}_video.mp4"
 
@@ -239,6 +285,9 @@ class QuoteVideoPipeline:
             quote_font=scene.quote_font or global_quote_font,
             author_font=scene.author_font or global_author_font
         )
+
+        if progress_callback:
+            progress_callback(f"✅ Scene {scene_num}: 완료", int(base_progress + scene_weight * 1.0))
 
         print(f"[Scene {scene_num}] ✅ Scene completed")
         return scene_video_path
