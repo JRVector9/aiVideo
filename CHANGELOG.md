@@ -5,6 +5,64 @@ All notable changes to Quote Video System will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.0] - 2026-01-24
+
+### Added
+- **프로젝트 폰트 파일 포함**: 환경 독립적인 폰트 렌더링
+  - `assets/font/` 디렉토리에 7개 한글 폰트 추가
+  - KOTRA_BOLD.otf, RIDIBatang.otf, 강원교육 시리즈 (모두 Bold/Light, 새음, 튼튼, 현옥샘)
+  - Git 저장소에 포함되어 모든 서버에서 일관된 폰트 사용
+- **사용자 폰트 선택 UI**: 프론트엔드에서 폰트 커스터마이징
+  - 명언 텍스트 폰트 선택 (중앙 상단)
+  - 저자 텍스트 폰트 선택 (중앙 하단)
+  - 자막 폰트 선택 (하단 나레이션)
+  - localStorage에 자동 저장/복원
+- **폰트 목록 API**: `GET /api/fonts` 엔드포인트
+  - config.AVAILABLE_FONTS 반환
+  - 프론트엔드에서 동적으로 폰트 드롭다운 채우기
+
+### Changed
+- **FFmpeg fontfile= 사용**: 시스템 폰트 대신 폰트 파일 절대 경로 지정
+  - `_build_quote_text_filter()`: `font=` → `fontfile='{FONT_DIR}/{filename}'`
+  - 백슬래시 이스케이핑 추가 (Windows 경로 지원)
+- **ASS 자막 fontsdir 옵션**: 한글 자막 깨짐 해결
+  - `subtitles={ass_path}:fontsdir={FONT_DIR}`
+  - 폰트 파일명에서 확장자 제거하여 ASS Fontname 생성
+- **프론트엔드 레이블 명확화**:
+  - "명언 텍스트" → "중앙 상단 고정 텍스트"
+  - "저자" → "중앙 하단 고정 텍스트"
+- **기본 폰트 변경**:
+  - 명언/저자: RIDIBatang.otf (우아한 바탕체)
+  - 자막: KOTRA_BOLD.otf (가독성 좋은 고딕)
+
+### Fixed
+- **한글 텍스트 완전 깨짐 해결**: fontfile로 직접 경로 지정
+  - 명언 본문 한글 100% 정상 렌더링
+  - 저자 이름 한글 100% 정상 렌더링
+  - 자막 한글 100% 정상 렌더링
+- **시스템 폰트 의존성 제거**: 모든 환경에서 동일한 폰트 사용
+
+### Technical Details
+- **config.py**:
+  - `AVAILABLE_FONTS`: 폰트 파일명 → 표시 이름 딕셔너리
+  - `QUOTE_FONT`, `AUTHOR_FONT`, `SUBTITLE_FONT`: 파일명으로 변경
+- **video_composer.py**:
+  - `_build_quote_text_filter()`: quote_font, author_font 파라미터 추가
+  - 텍스트 이스케이핑: 백슬래시 추가 처리
+  - `_convert_srt_to_ass()`: Path(font_file).stem으로 폰트명 추출
+- **pipeline.py**:
+  - Scene 데이터클래스에 `quote_font`, `author_font` 필드 추가
+  - `create_video()`: 전역 폰트 설정 파라미터 추가
+  - Scene별 폰트 > 전역 폰트 > Config 기본값 우선순위
+- **api.py**:
+  - VideoRequest에 `quote_font`, `author_font` 필드 추가
+  - `process_video_job()` signature 업데이트
+  - `GET /api/fonts` 엔드포인트 추가
+- **static/index.html**:
+  - `loadFonts()`: 페이지 로드 시 폰트 목록 fetch
+  - fontSettings localStorage 저장/복원
+  - generateVideo()에서 폰트 설정 전송
+
 ## [1.6.0] - 2026-01-24
 
 ### Changed
