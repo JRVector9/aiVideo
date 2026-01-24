@@ -25,29 +25,13 @@ from config_manager import config_manager
 def generate_video_filename() -> str:
     """
     자동으로 고유한 영상 파일명 생성
-    형식: aiVideo_YYYYMMDD_001.mp4
+    형식: aiVideo_YYYYMMDD_HHMMSS_UUID8.mp4
+    UUID 사용으로 동시 요청 시 파일명 충돌 방지
     """
-    today = datetime.now().strftime("%Y%m%d")
-    pattern = f"aiVideo_{today}_*.mp4"
-
-    # 오늘 날짜의 기존 파일 찾기
-    existing_files = list(OUTPUT_DIR.glob(pattern))
-
-    if not existing_files:
-        # 첫 번째 파일
-        return f"aiVideo_{today}_001"
-
-    # 기존 파일에서 숫자 추출
-    numbers = []
-    for file in existing_files:
-        match = re.search(rf"aiVideo_{today}_(\d+)\.mp4", file.name)
-        if match:
-            numbers.append(int(match.group(1)))
-
-    # 가장 큰 숫자 + 1
-    next_number = max(numbers) + 1 if numbers else 1
-
-    return f"aiVideo_{today}_{next_number:03d}"
+    import uuid
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    unique_id = uuid.uuid4().hex[:8]
+    return f"aiVideo_{timestamp}_{unique_id}"
 
 app = FastAPI(
     title="AI Video Generator",
