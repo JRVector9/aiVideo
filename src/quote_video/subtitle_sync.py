@@ -18,10 +18,7 @@ class SubtitleSync:
             model_name: Whisper 모델명 (기본값: config의 WHISPER_MODEL)
         """
         self.model_name = model_name or WHISPER_MODEL
-
-        print(f"[SubtitleSync] Loading Whisper model: {self.model_name}")
-        self.model = whisper.load_model(self.model_name)
-        print(f"[SubtitleSync] Model loaded successfully")
+        self.model = None  # lazy loading: 첫 사용 시 로드
 
     def generate_srt(
         self,
@@ -41,6 +38,12 @@ class SubtitleSync:
             저장된 SRT 파일 경로
         """
         lang = language or WHISPER_LANGUAGE
+
+        # Lazy loading: 첫 호출 시 모델 로드
+        if self.model is None:
+            print(f"[SubtitleSync] Loading Whisper model: {self.model_name}")
+            self.model = whisper.load_model(self.model_name)
+            print(f"[SubtitleSync] Model loaded successfully")
 
         print(f"[SubtitleSync] Transcribing audio...")
         print(f"[SubtitleSync] Audio: {audio_path}")
