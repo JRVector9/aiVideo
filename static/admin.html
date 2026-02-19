@@ -486,7 +486,8 @@
                 <div class="form-group">
                     <label class="form-label" for="imageBackend">Image Generation Backend</label>
                     <select id="imageBackend" class="form-select" onchange="toggleFlux2CUrl()">
-                        <option value="comfyui">ComfyUI (기본)</option>
+                        <option value="gpu-api">GPU API (gpu-api.brut.bot) ✅ 권장</option>
+                        <option value="comfyui">ComfyUI (로컬)</option>
                         <option value="flux2c-api">Flux2C API (Mac Metal 가속)</option>
                     </select>
                     <div style="font-size: 0.75rem; color: var(--text-tertiary); margin-top: 0.5rem;">
@@ -564,7 +565,7 @@
         function loadApiSettings() {
             const apiUrl = localStorage.getItem('apiUrl') || 'https://aivideo.brut.bot';
             const imageResolution = localStorage.getItem('imageResolution') || '1080x1920';
-            const imageBackend = localStorage.getItem('imageBackend') || 'comfyui';
+            const imageBackend = localStorage.getItem('imageBackend') || 'gpu-api';
             const flux2cApiUrl = localStorage.getItem('flux2cApiUrl') || '';
 
             document.getElementById('apiUrl').value = apiUrl;

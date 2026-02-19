@@ -1233,7 +1233,7 @@
             const authorFont = document.getElementById('authorFont').value || null;
 
             // 이미지 생성 백엔드 설정 (localStorage에서 읽기)
-            const imageBackend = localStorage.getItem('imageBackend') || 'comfyui';
+            const imageBackend = localStorage.getItem('imageBackend') || 'gpu-api';
             const flux2cApiUrl = localStorage.getItem('flux2cApiUrl') || null;
 
             console.log('🖼️ 이미지 백엔드:', imageBackend);

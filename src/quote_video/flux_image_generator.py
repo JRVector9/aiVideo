@@ -1,6 +1,6 @@
 """
-FLUX Image Generator using ComfyUI API or Flux2C API
-ComfyUI 서버 또는 Flux2C API를 통한 FLUX 모델 이미지 생성
+FLUX Image Generator using ComfyUI API, Flux2C API, or GPU API
+ComfyUI 서버, Flux2C API, 또는 gpu-api.brut.bot을 통한 FLUX 모델 이미지 생성
 """
 
 import json
@@ -23,20 +23,24 @@ from .config import (
 from .translator import Translator
 
 
+GPU_API_BASE_URL = "https://gpu-api.brut.bot"
+GPU_API_KEY = "AGnrFQGUkoSAFOb2coSEcoCBuCLSVm64qEA2HrXCiV8"
+
+
 class FluxImageGenerator:
-    """ComfyUI 또는 Flux2C API를 사용한 이미지 생성기"""
+    """ComfyUI, Flux2C API, 또는 GPU API를 사용한 이미지 생성기"""
 
     def __init__(
         self,
         server_url: Optional[str] = None,
-        backend: str = "comfyui",
+        backend: str = "gpu-api",
         flux2c_api_url: Optional[str] = None,
         flux2c_timeout: int = 120
     ):
         """
         Args:
             server_url: ComfyUI 서버 URL (기본값: config에서 로드)
-            backend: 이미지 생성 백엔드 ("comfyui" 또는 "flux2c-api")
+            backend: 이미지 생성 백엔드 ("gpu-api", "comfyui", "flux2c-api")
             flux2c_api_url: Flux2C API URL (backend="flux2c-api"인 경우 필수)
             flux2c_timeout: Flux2C API 타임아웃 (초)
         """
@@ -104,13 +108,21 @@ class FluxImageGenerator:
         # 백엔드 선택
         image_data = None
 
+        # GPU API 시도
+        if self.backend == "gpu-api":
+            try:
+                image_data = self._generate_gpu_api(full_prompt, width, height, seed)
+            except Exception as e:
+                print(f"[FluxImageGenerator] GPU API failed, falling back to ComfyUI: {e}")
+                self.backend = "comfyui"
+
         # Flux2C API 시도
-        if self.backend == "flux2c-api":
+        elif self.backend == "flux2c-api":
             try:
                 image_data = self._generate_flux2c_api(full_prompt, width, height, seed)
             except Exception as e:
                 print(f"[FluxImageGenerator] Flux2C API failed, falling back to ComfyUI: {e}")
-                self.backend = "comfyui"  # Fallback
+                self.backend = "comfyui"
 
         # ComfyUI 사용
         if self.backend == "comfyui" or image_data is None:
@@ -242,6 +254,88 @@ class FluxImageGenerator:
 
         print(f"[FluxImageGenerator] Downloaded: {filename}")
         return response.content
+
+    def _generate_gpu_api(
+        self,
+        prompt: str,
+        width: int,
+        height: int,
+        seed: int = -1,
+        engine: str = "flux",
+        steps: int = 20,
+        poll_interval: int = 5,
+        timeout: int = 300
+    ) -> bytes:
+        """
+        gpu-api.brut.bot을 사용하여 이미지 생성
+
+        Args:
+            prompt: 이미지 프롬프트 (영어)
+            width: 이미지 가로 해상도
+            height: 이미지 세로 해상도
+            seed: 시드값 (-1이면 랜덤)
+            engine: 엔진 (flux, flux2, sdxl, custom)
+            steps: 샘플링 스텝 수
+            poll_interval: 폴링 간격 (초)
+            timeout: 최대 대기 시간 (초)
+
+        Returns:
+            이미지 데이터 (bytes)
+        """
+        headers = {
+            "X-API-Key": GPU_API_KEY,
+            "Content-Type": "application/json"
+        }
+
+        # Step 1: 생성 요청
+        payload = {
+            "engine": engine,
+            "prompt": prompt,
+            "width": width,
+            "height": height,
+            "steps": steps,
+            "seed": seed
+        }
+
+        print(f"[FluxImageGenerator] GPU API: Submitting job...")
+        resp = requests.post(f"{GPU_API_BASE_URL}/api/v1/generate", json=payload, headers=headers)
+        resp.raise_for_status()
+
+        job_id = resp.json().get("job_id")
+        if not job_id:
+            raise RuntimeError(f"GPU API: no job_id in response: {resp.json()}")
+        print(f"[FluxImageGenerator] GPU API: job_id={job_id}")
+
+        # Step 2: 완료까지 폴링
+        start = time.time()
+        while True:
+            if time.time() - start > timeout:
+                raise TimeoutError(f"GPU API timed out after {timeout}s")
+
+            time.sleep(poll_interval)
+            r = requests.get(f"{GPU_API_BASE_URL}/api/v1/jobs/{job_id}", headers=headers)
+            r.raise_for_status()
+            data = r.json()
+            status = data.get("status")
+
+            elapsed = time.time() - start
+            print(f"[FluxImageGenerator] GPU API: status={status} ({elapsed:.0f}s)")
+
+            if status == "done":
+                filename = data.get("filename")
+                if not filename:
+                    raise RuntimeError(f"GPU API: no filename in response: {data}")
+                break
+            elif status == "failed":
+                raise RuntimeError(f"GPU API job failed: {data.get('error', 'unknown')}")
+
+        # Step 3: 파일 다운로드
+        print(f"[FluxImageGenerator] GPU API: Downloading {filename}...")
+        dl = requests.get(f"{GPU_API_BASE_URL}/api/v1/files/{filename}", headers=headers)
+        dl.raise_for_status()
+
+        print(f"[FluxImageGenerator] GPU API: Done in {time.time()-start:.1f}s")
+        return dl.content
 
     def _generate_flux2c_api(
         self,
