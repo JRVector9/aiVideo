@@ -142,6 +142,8 @@ class VideoRequest(BaseModel):
     # 전역 명언/저자 텍스트 폰트 설정 (선택사항)
     quote_font: Optional[str] = None
     author_font: Optional[str] = None
+    # TTS 생략 (무음 영상 생성)
+    skip_tts: Optional[bool] = False
 
 def process_video_job(
     job_id: str,
@@ -164,7 +166,8 @@ def process_video_job(
     flux2c_api_url: Optional[str] = None,
     # 프롬프트 저장용 원본 데이터
     original_scenes: Optional[List[Dict]] = None,
-    global_prompt: Optional[str] = None
+    global_prompt: Optional[str] = None,
+    skip_tts: bool = False
 ):
     """백그라운드에서 영상 생성 처리"""
     import traceback
@@ -216,7 +219,8 @@ def process_video_job(
             subtitle_outline_width=subtitle_outline_width,
             subtitle_position=subtitle_position,
             quote_font=quote_font,
-            author_font=author_font
+            author_font=author_font,
+            skip_tts=skip_tts
         )
 
         print(f"[Job {job_id}] Video created successfully: {result_path}")
@@ -344,7 +348,8 @@ async def create_video(request: VideoRequest, background_tasks: BackgroundTasks)
             request.image_backend,  # 이미지 생성 백엔드
             request.flux2c_api_url,  # Flux2C API URL
             original_scenes,  # 프롬프트 저장용
-            request.global_prompt  # 전역 프롬프트
+            request.global_prompt,  # 전역 프롬프트
+            request.skip_tts  # TTS 생략
         )
 
         return {

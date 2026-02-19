@@ -86,7 +86,8 @@ class QuoteVideoPipeline:
         subtitle_position: Optional[str] = None,
         # 전역 명언/저자 텍스트 폰트 설정 (모든 씬에 적용, Scene별 설정이 우선)
         quote_font: Optional[str] = None,
-        author_font: Optional[str] = None
+        author_font: Optional[str] = None,
+        skip_tts: bool = False
     ) -> Path:
         """
         씬 데이터로부터 최종 영상 생성
@@ -99,6 +100,7 @@ class QuoteVideoPipeline:
             progress_callback: 진행 상태 콜백 함수 (stage, progress)
             image_width: 이미지 가로 해상도 (기본값: 1920)
             image_height: 이미지 세로 해상도 (기본값: 1080)
+            skip_tts: TTS/자막 생성 생략 (무음 영상)
 
         Returns:
             최종 영상 파일 경로
@@ -136,7 +138,8 @@ class QuoteVideoPipeline:
                 global_language,
                 subtitle_font, subtitle_font_size, subtitle_font_color,
                 subtitle_outline_color, subtitle_outline_width, subtitle_position,
-                quote_font, author_font
+                quote_font, author_font,
+                skip_tts=skip_tts
             )
             scene_videos.append(scene_video)
 
@@ -195,7 +198,8 @@ class QuoteVideoPipeline:
         global_subtitle_outline_width: Optional[int] = None,
         global_subtitle_position: Optional[str] = None,
         global_quote_font: Optional[str] = None,
-        global_author_font: Optional[str] = None
+        global_author_font: Optional[str] = None,
+        skip_tts: bool = False
     ) -> Path:
         """단일 씬 처리"""
         scene_prefix = f"scene_{scene_num:03d}"
@@ -222,43 +226,51 @@ class QuoteVideoPipeline:
             progress_callback(f"🎨 Scene {scene_num}: 이미지 생성 완료", int(base_progress + scene_weight * 0.40))
 
         # 2. TTS 생성 (25% of scene weight)
-        print(f"[Scene {scene_num}] Generating TTS...")
-        if progress_callback:
-            progress_callback(f"🎙️ Scene {scene_num}: 음성 생성 시작...", int(base_progress + scene_weight * 0.42))
-
-        if progress_callback:
-            progress_callback(f"🎙️ Scene {scene_num}: 음성 생성 중...", int(base_progress + scene_weight * 0.50))
-
-        # 언어 설정: Scene별 설정 우선, 없으면 전역 설정 사용
+        audio_path = TEMP_DIR / f"{scene_prefix}_audio.wav"
+        subtitle_path = None
         language = scene.language or global_language
 
-        audio_path = TEMP_DIR / f"{scene_prefix}_audio.wav"
-        self.tts_generator.generate(
-            scene.narration,
-            audio_path,
-            language=language
-        )
+        if skip_tts:
+            print(f"[Scene {scene_num}] Skipping TTS (skip_tts=True), generating silence...")
+            if progress_callback:
+                progress_callback(f"🔇 Scene {scene_num}: TTS 생략 (무음)", int(base_progress + scene_weight * 0.65))
+            import subprocess
+            subprocess.run([
+                "ffmpeg", "-y", "-f", "lavfi", "-i", "anullsrc=r=44100:cl=mono",
+                "-t", "5", str(audio_path)
+            ], check=True, capture_output=True)
+        else:
+            print(f"[Scene {scene_num}] Generating TTS...")
+            if progress_callback:
+                progress_callback(f"🎙️ Scene {scene_num}: 음성 생성 시작...", int(base_progress + scene_weight * 0.42))
+            if progress_callback:
+                progress_callback(f"🎙️ Scene {scene_num}: 음성 생성 중...", int(base_progress + scene_weight * 0.50))
 
-        if progress_callback:
-            progress_callback(f"🎙️ Scene {scene_num}: 음성 생성 완료", int(base_progress + scene_weight * 0.65))
+            self.tts_generator.generate(
+                scene.narration,
+                audio_path,
+                language=language
+            )
 
-        # 3. 자막 생성 (15% of scene weight)
-        print(f"[Scene {scene_num}] Generating subtitles...")
-        if progress_callback:
-            progress_callback(f"📝 Scene {scene_num}: 자막 생성 시작...", int(base_progress + scene_weight * 0.67))
+            if progress_callback:
+                progress_callback(f"🎙️ Scene {scene_num}: 음성 생성 완료", int(base_progress + scene_weight * 0.65))
 
-        if progress_callback:
-            progress_callback(f"📝 Scene {scene_num}: 자막 생성 중...", int(base_progress + scene_weight * 0.72))
+            # 3. 자막 생성 (15% of scene weight)
+            print(f"[Scene {scene_num}] Generating subtitles...")
+            if progress_callback:
+                progress_callback(f"📝 Scene {scene_num}: 자막 생성 시작...", int(base_progress + scene_weight * 0.67))
+            if progress_callback:
+                progress_callback(f"📝 Scene {scene_num}: 자막 생성 중...", int(base_progress + scene_weight * 0.72))
 
-        subtitle_path = TEMP_DIR / f"{scene_prefix}_subtitle.srt"
-        self.subtitle_sync.generate_srt(
-            audio_path,
-            subtitle_path,
-            language=language
-        )
+            subtitle_path = TEMP_DIR / f"{scene_prefix}_subtitle.srt"
+            self.subtitle_sync.generate_srt(
+                audio_path,
+                subtitle_path,
+                language=language
+            )
 
-        if progress_callback:
-            progress_callback(f"📝 Scene {scene_num}: 자막 생성 완료", int(base_progress + scene_weight * 0.80))
+            if progress_callback:
+                progress_callback(f"📝 Scene {scene_num}: 자막 생성 완료", int(base_progress + scene_weight * 0.80))
 
         # 4. 씬 합성 (20% of scene weight)
         print(f"[Scene {scene_num}] Composing scene...")
