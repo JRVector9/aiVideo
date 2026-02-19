@@ -6,6 +6,8 @@ RUN apt-get update && apt-get install -y \
     git \
     fonts-nanum \
     fontconfig \
+    libgomp1 \
+    libsndfile1 \
     && fc-cache -fv \
     && rm -rf /var/lib/apt/lists/*
 
