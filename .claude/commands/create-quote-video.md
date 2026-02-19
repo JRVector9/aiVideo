@@ -152,7 +152,7 @@ temp/ (자동 삭제)
 ### ComfyUI 연결 실패
 ```
 ❌ ComfyUI 서버에 연결할 수 없습니다.
-확인: https://comfyui.jrai.space 가 실행 중인지 확인하세요.
+확인: http://localhost:8188 가 실행 중인지 확인하세요.
 ```
 
 ### Gemini API 키 없음
@@ -188,7 +188,7 @@ GEMINI_API_KEY=your_key_here
 
 - Python 3.10+
 - FFmpeg
-- ComfyUI 서버 (comfyui.jrai.space)
+- ComfyUI 서버 (localhost:8188)
 - Gemini API 키
 - 10GB+ 디스크 공간 (Whisper 모델)
 - GPU 권장 (선택)

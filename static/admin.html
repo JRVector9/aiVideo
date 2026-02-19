@@ -469,7 +469,7 @@
                         type="text"
                         id="apiUrl"
                         class="form-input"
-                        placeholder="https://aivideo.jrai.space"
+                        placeholder="https://aivideo.brut.bot"
                     >
                 </div>
 
@@ -562,7 +562,7 @@
 
         // Load API settings from localStorage
         function loadApiSettings() {
-            const apiUrl = localStorage.getItem('apiUrl') || 'https://aivideo.jrai.space';
+            const apiUrl = localStorage.getItem('apiUrl') || 'https://aivideo.brut.bot';
             const imageResolution = localStorage.getItem('imageResolution') || '1080x1920';
             const imageBackend = localStorage.getItem('imageBackend') || 'comfyui';
             const flux2cApiUrl = localStorage.getItem('flux2cApiUrl') || '';
@@ -615,7 +615,7 @@
         // Load presets from API
         async function loadPresets() {
             try {
-                const apiUrl = localStorage.getItem('apiUrl') || 'https://aivideo.jrai.space';
+                const apiUrl = localStorage.getItem('apiUrl') || 'https://aivideo.brut.bot';
                 const response = await fetch(`${apiUrl}/api/config/presets`);
 
                 if (!response.ok) {
@@ -677,7 +677,7 @@
             }
 
             try {
-                const apiUrl = localStorage.getItem('apiUrl') || 'https://aivideo.jrai.space';
+                const apiUrl = localStorage.getItem('apiUrl') || 'https://aivideo.brut.bot';
                 const response = await fetch(`${apiUrl}/api/config/presets/${presetName}`);
 
                 if (!response.ok) {
@@ -716,7 +716,7 @@
         async function savePreset(name, description) {
             try {
                 const config = collectCurrentConfig();
-                const apiUrl = localStorage.getItem('apiUrl') || 'https://aivideo.jrai.space';
+                const apiUrl = localStorage.getItem('apiUrl') || 'https://aivideo.brut.bot';
 
                 const response = await fetch(`${apiUrl}/api/config/presets/${name}`, {
                     method: 'POST',
@@ -764,7 +764,7 @@
             }
 
             try {
-                const apiUrl = localStorage.getItem('apiUrl') || 'https://aivideo.jrai.space';
+                const apiUrl = localStorage.getItem('apiUrl') || 'https://aivideo.brut.bot';
                 const response = await fetch(`${apiUrl}/api/config/presets/${presetName}`, {
                     method: 'DELETE'
                 });

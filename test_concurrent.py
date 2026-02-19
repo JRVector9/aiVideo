@@ -6,7 +6,7 @@ import aiohttp
 import json
 from datetime import datetime
 
-API_URL = "https://aivideo.jrai.space"
+API_URL = "https://aivideo.brut.bot"  # Dokploy 배포 주소
 
 # 테스트용 간단한 Scene 데이터
 REQUEST_1 = {

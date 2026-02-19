@@ -5,7 +5,7 @@ ComfyUI 서버의 사용 가능한 모델 확인
 import requests
 import json
 
-COMFYUI_URL = "https://comfyui.jrai.space"
+COMFYUI_URL = "http://localhost:8188"
 
 def check_checkpoints():
     """사용 가능한 Checkpoint 모델 확인"""

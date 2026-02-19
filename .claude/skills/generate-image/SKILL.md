@@ -48,7 +48,7 @@ print(f"Image saved: {image_path}")
 
 | 항목 | 값 | 설명 |
 |------|-----|------|
-| 서버 | comfyui.jrai.space | ComfyUI 서버 URL |
+| 서버 | localhost:8188 | ComfyUI 서버 URL |
 | 모델 | FLUX.1 Schnell | 빠른 이미지 생성 모델 |
 | 로더 | UNETLoader | FLUX 전용 로더 |
 | 해상도 | 설정 가능 (기본: 1920x1080) | 커스텀 해상도 지원 |
@@ -109,7 +109,7 @@ philosophical and artistic mood, hand-drawn feel
 ## Environment Variables
 
 ```bash
-COMFYUI_URL=https://comfyui.jrai.space
+COMFYUI_URL=http://localhost:8188
 ```
 
 ## Performance

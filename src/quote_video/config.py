@@ -13,7 +13,7 @@ load_dotenv()
 # ===========================
 # ComfyUI Configuration
 # ===========================
-COMFYUI_BASE_URL = os.getenv("COMFYUI_URL", "https://comfyui.jrai.space")
+COMFYUI_BASE_URL = os.getenv("COMFYUI_URL", "http://localhost:8188")
 COMFYUI_API_ENDPOINT = f"{COMFYUI_BASE_URL}/prompt"
 COMFYUI_WS_ENDPOINT = f"{COMFYUI_BASE_URL.replace('https://', 'wss://').replace('http://', 'ws://')}/ws"
 COMFYUI_VIEW_ENDPOINT = f"{COMFYUI_BASE_URL}/view"

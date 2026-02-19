@@ -5,7 +5,7 @@ ComfyUI에서 FLUX 모델 찾기 - 모든 로더 타입 확인
 import requests
 import json
 
-COMFYUI_URL = "https://comfyui.jrai.space"
+COMFYUI_URL = "http://localhost:8188"
 
 def search_all_loaders():
     """모든 로더 타입에서 FLUX 모델 찾기"""

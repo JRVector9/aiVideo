@@ -135,7 +135,7 @@ localStorage.getItem('aiVideo_globalPrompt')
 
 #### 사전 준비:
 ⚠️ **이 테스트는 실제 API 서버가 필요합니다**
-- API URL: https://aivideo.jrai.space (기본값)
+- API URL: https://aivideo.brut.bot (기본값)
 - 또는 로컬 FastAPI 서버 실행
 
 #### 테스트 절차 (API 서버 있을 때):

@@ -408,7 +408,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Python 3.10+: Runtime environment
 
 #### API Services
-- ComfyUI Server: comfyui.jrai.space (FLUX Schnell)
+- ComfyUI Server: localhost:8188 (FLUX Schnell)
 - ElevenLabs API: TTS service (free tier available)
 
 ### System Requirements

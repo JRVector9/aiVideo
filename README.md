@@ -44,7 +44,7 @@ pip install -r requirements.txt
 cp .env.example .env
 
 # .env 편집
-COMFYUI_URL=https://comfyui.jrai.space
+COMFYUI_URL=http://localhost:8188
 ELEVENLABS_API_KEY=your_api_key_here
 
 # 선택사항: Flux2C API (Mac Metal 가속)
@@ -91,7 +91,7 @@ python test_subtitle.py
 
 ### API 요구사항
 
-- **ComfyUI 서버**: https://comfyui.jrai.space (FLUX.1 Schnell 모델)
+- **ComfyUI 서버**: http://localhost:8188 (FLUX.1 Schnell 모델)
 - **ElevenLabs API**: 무료 10,000 글자/월
 
 ### 디스크 공간
@@ -357,7 +357,7 @@ ELEVENLABS_VOICE_ID = "EXAVITQu4vr4xnSDxMaL"
 
 ```bash
 # 서버 상태 확인
-curl https://comfyui.jrai.space/
+curl http://localhost:8188/
 
 # 모델 확인
 python find_flux.py

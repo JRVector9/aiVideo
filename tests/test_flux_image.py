@@ -14,7 +14,7 @@ from quote_video.config import TEMP_DIR
 def main():
     print("\n╔═══════════════════════════════════════╗")
     print("║   FLUX Image Generation Test          ║")
-    print("║   Server: comfyui.jrai.space          ║")
+    print("║   Server: localhost:8188          ║")
     print("╚═══════════════════════════════════════╝\n")
 
     # 출력 경로 설정
@@ -24,7 +24,7 @@ def main():
     print("Test Configuration")
     print("="*50)
     print(f"Output: {output_path}")
-    print(f"Server: https://comfyui.jrai.space")
+    print(f"Server: http://localhost:8188")
     print()
 
     # 테스트 프롬프트

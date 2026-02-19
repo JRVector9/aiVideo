@@ -6,7 +6,7 @@ import requests
 import json
 from pathlib import Path
 
-COMFYUI_URL = "https://comfyui.jrai.space"
+COMFYUI_URL = "http://localhost:8188"
 
 def test_server_status():
     """서버 상태 확인"""
@@ -153,7 +153,7 @@ def test_embeddings():
 def main():
     print("\n╔═══════════════════════════════════════╗")
     print("║   ComfyUI Connection Test            ║")
-    print("║   Server: comfyui.jrai.space          ║")
+    print("║   Server: localhost:8188              ║")
     print("╚═══════════════════════════════════════╝\n")
 
     results = []

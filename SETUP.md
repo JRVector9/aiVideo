@@ -125,7 +125,7 @@ cp .env.example .env
 ```bash
 # .env
 # Image Generation Backend (ComfyUI - 기본값)
-COMFYUI_URL=https://comfyui.jrai.space
+COMFYUI_URL=http://localhost:8188
 
 # Flux2C API (선택사항 - Mac Metal 가속 사용 시)
 # FLUX2C_API_URL=https://your-ngrok-url.ngrok-free.dev
@@ -343,10 +343,10 @@ SUBTITLE_FONT_SIZE = 48
 
 ```bash
 # 1. 서버 상태 확인
-curl https://comfyui.jrai.space/
+curl http://localhost:8188/
 
 # 2. 네트워크 확인
-ping comfyui.jrai.space
+ping localhost:8188
 
 # 3. 방화벽 확인
 ```

@@ -6,7 +6,7 @@
 Dokploy 프로젝트에서 다음 환경 변수를 설정하세요:
 
 ```
-COMFYUI_URL=https://comfyui.jrai.space
+COMFYUI_URL=http://localhost:8188
 ELEVENLABS_API_KEY=your_api_key_here
 ```
 
@@ -54,7 +54,7 @@ ELEVENLABS_API_KEY=your_api_key_here
 1. **메모리**: Whisper large-v3 모델이 약 3GB 메모리 사용
 2. **디스크**: 영상 파일이 누적되므로 주기적 정리 필요
 3. **API 키**: ElevenLabs API 키는 반드시 환경 변수로 설정
-4. **ComfyUI**: 외부 ComfyUI 서버 필요 (https://comfyui.jrai.space)
+4. **ComfyUI**: 외부 ComfyUI 서버 필요 (http://localhost:8188)
 
 ## 테스트
 

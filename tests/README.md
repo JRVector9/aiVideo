@@ -174,10 +174,10 @@ python tests/test_subtitle.py
 
 ```bash
 # 서버 상태 확인
-curl https://comfyui.jrai.space/
+curl http://localhost:8188/
 
 # 네트워크 확인
-ping comfyui.jrai.space
+ping localhost:8188
 ```
 
 ### FLUX 모델 없음
@@ -221,7 +221,7 @@ WHISPER_MODEL = "medium"  # 또는 "small"
 ## 🔧 테스트 환경
 
 - **Python**: 3.10+
-- **ComfyUI**: comfyui.jrai.space
+- **ComfyUI**: localhost:8188
 - **FLUX Model**: flux1-schnell.safetensors (빠른 생성)
 - **Whisper Model**: large-v3 (~3GB)
 - **네트워크**: 인터넷 연결 필요
