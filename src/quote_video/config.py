@@ -21,7 +21,7 @@ COMFYUI_HISTORY_ENDPOINT = f"{COMFYUI_BASE_URL}/history"
 
 # FLUX 모델 설정 (UNETLoader 방식)
 # FLUX.1 Schnell - Fast and stable on MPS (Apple Silicon)
-FLUX_UNET_NAME = "flux1-schnell.safetensors"
+FLUX_UNET_NAME = "flux1-dev.safetensors"
 FLUX_CLIP_TYPE = "flux"
 FLUX_WEIGHT_DTYPE = "default"
 
@@ -41,7 +41,7 @@ cluttered, busy, complex background
 
 IMAGE_WIDTH = 1920
 IMAGE_HEIGHT = 1080
-IMAGE_STEPS = 4  # FLUX.1 Schnell: 4-8 steps recommended (fast)
+IMAGE_STEPS = 20  # FLUX.1 Dev: 20-30 steps recommended
 IMAGE_CFG_SCALE = 1.0  # FLUX uses CFG 1.0
 IMAGE_SAMPLER = "euler"
 IMAGE_SCHEDULER = "simple"
@@ -174,7 +174,7 @@ DEFAULT_FLUX_WORKFLOW = {
     },
     "5": {
         "inputs": {
-            "clip_name1": "t5xxl_fp16.safetensors",
+            "clip_name1": "t5xxl_fp8_e4m3fn.safetensors",
             "clip_name2": "clip_l.safetensors",
             "type": FLUX_CLIP_TYPE
         },
