@@ -29,21 +29,16 @@ class TTSGenerator:
             api_key: ElevenLabs API 키 (기본값: config에서 로드)
         """
         self.api_key = api_key or ELEVENLABS_API_KEY
-
-        if not self.api_key:
-            raise ValueError(
-                "ELEVENLABS_API_KEY is required. "
-                "Set it in .env file or pass it to constructor.\n"
-                "Get your API key from: https://elevenlabs.io/app/settings/api-keys"
-            )
-
-        self.client = ElevenLabs(api_key=self.api_key)
+        self.client = ElevenLabs(api_key=self.api_key) if self.api_key else None
         self.voice_id = ELEVENLABS_VOICE_ID
         self.model = ELEVENLABS_MODEL
 
-        print(f"[TTSGenerator] Initialized with ElevenLabs")
-        print(f"[TTSGenerator] Model: {self.model}")
-        print(f"[TTSGenerator] Voice ID: {self.voice_id}")
+        if self.api_key:
+            print(f"[TTSGenerator] Initialized with ElevenLabs")
+            print(f"[TTSGenerator] Model: {self.model}")
+            print(f"[TTSGenerator] Voice ID: {self.voice_id}")
+        else:
+            print(f"[TTSGenerator] WARNING: ELEVENLABS_API_KEY not set (TTS will fail at runtime)")
 
     def generate(
         self,
@@ -68,6 +63,13 @@ class TTSGenerator:
         Returns:
             저장된 오디오 파일 경로
         """
+        if not self.api_key or not self.client:
+            raise ValueError(
+                "ELEVENLABS_API_KEY is required. "
+                "Set it in environment variables.\n"
+                "Get your API key from: https://elevenlabs.io/app/settings/api-keys"
+            )
+
         voice = voice_id or self.voice_id
         stab = stability if stability is not None else ELEVENLABS_VOICE_STABILITY
         sim = similarity if similarity is not None else ELEVENLABS_VOICE_SIMILARITY
